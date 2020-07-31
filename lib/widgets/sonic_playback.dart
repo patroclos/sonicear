@@ -67,7 +67,7 @@ class _SonicPlaybackState extends State<SonicPlayback> {
                   children: <Widget>[
                     if (mediaItem?.extras?.containsKey(kCoverId) ?? false)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 32),
+                        padding: const EdgeInsets.only(bottom: 32, left: 20, right: 20, top: 20),
                         child: SonicCover(mediaItem?.extras[kCoverId],
                             size:
                                 MediaQuery.of(context).size.width / 4 * 3 / 2),
@@ -86,57 +86,15 @@ class _SonicPlaybackState extends State<SonicPlayback> {
                         ),
                       ],
                     ),
-                    // Text('$position / $duration'),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        IconButton(
-                          icon: Icon(Icons.shuffle),
-                          iconSize: 35,
-                          onPressed: () {
-                            throw new StateError('not implemented');
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.skip_previous),
-                          iconSize: 35,
-                          onPressed: () {
-                            throw new StateError('not implemented');
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(playing ? Icons.pause : Icons.play_arrow),
-                          iconSize: 50,
-                          onPressed: () async {
-                            if (AudioService.running) {
-                              if (AudioService.playbackState.playing)
-                                await AudioService.pause();
-                              else
-                                await AudioService.play();
-                            } else {
-                              // TODO: scrap this
-                              final started = await startSonicearAudioTask();
-                              print('tried starting service: $started');
-                            }
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.skip_next),
-                          iconSize: 35,
-                          onPressed: () {
-                            throw new StateError('not implemented');
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.repeat),
-                          iconSize: 35,
-                          onPressed: () {
-                            throw new StateError('not implemented');
-                          },
-                        ),
-                      ],
-                    ),
-                    if (mediaItem != null) positionScrubber(mediaItem, state)
+                    if (mediaItem != null)
+                      positionScrubber(mediaItem, state),
+                    _playbackControlRow(playing),
+                    IconButton(
+                      icon: Icon(Icons.queue_music),
+                      onPressed: () {
+                        throw StateError('not implemented queue view');
+                      },
+                    )
                   ],
                 );
               }),
@@ -144,6 +102,56 @@ class _SonicPlaybackState extends State<SonicPlayback> {
       ),
     );
   }
+
+  Widget _playbackControlRow(bool playing) => Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: <Widget>[
+      IconButton(
+        icon: Icon(Icons.shuffle),
+        iconSize: 35,
+        onPressed: () {
+          throw new StateError('not implemented');
+        },
+      ),
+      IconButton(
+        icon: Icon(Icons.skip_previous),
+        iconSize: 35,
+        onPressed: () {
+          throw new StateError('not implemented');
+        },
+      ),
+      IconButton(
+        icon: Icon(playing ? Icons.pause : Icons.play_arrow),
+        iconSize: 50,
+        onPressed: () async {
+          if (AudioService.running) {
+            if (AudioService.playbackState.playing)
+              await AudioService.pause();
+            else
+              await AudioService.play();
+          } else {
+            // TODO: scrap this
+            final started = await startSonicearAudioTask();
+            print('tried starting service: $started');
+          }
+        },
+      ),
+      IconButton(
+        icon: Icon(Icons.skip_next),
+        iconSize: 35,
+        onPressed: () {
+          throw new StateError('not implemented');
+        },
+      ),
+      IconButton(
+        icon: Icon(Icons.repeat),
+        iconSize: 35,
+        onPressed: () {
+          throw new StateError('not implemented');
+        },
+      ),
+    ],
+  );
 
   Widget positionScrubber(MediaItem mediaItem, PlaybackState state) {
     double seekPos;
@@ -194,12 +202,6 @@ class _SonicPlaybackState extends State<SonicPlayback> {
               // Text('${state.currentPosition}'),
             ],
 
-            IconButton(
-              icon: Icon(Icons.queue_music),
-              onPressed: () {
-                throw StateError('not implemented queue view');
-              },
-            )
           ],
         );
       },

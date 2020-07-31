@@ -262,7 +262,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
 
   @override
   void onAddQueueItemAt(MediaItem mediaItem, int index) {
-    _queue.insert(index, mediaItem);
+    _queue.insert(index + _queueIndex, mediaItem);
   }
 
   @override

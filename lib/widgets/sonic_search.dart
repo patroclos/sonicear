@@ -102,7 +102,7 @@ class _SonicSearchState extends State<SonicSearch> {
                         song);
                     switch (choice) {
                       case 'Play Next':
-                        AudioService.addQueueItemAt(mediaItem, 0);
+                        AudioService.addQueueItemAt(mediaItem, 1);
                         break;
                       case 'Play Last':
                         AudioService.addQueueItem(mediaItem);

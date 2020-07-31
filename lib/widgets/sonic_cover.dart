@@ -64,9 +64,9 @@ class _SonicCoverState extends State<SonicCover> {
           }[widget.displayType],
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(.5),
+              color: Colors.white.withOpacity(0.3),
               spreadRadius: widget.size / 20,
-              blurRadius: widget.size / 17,
+              blurRadius: widget.size / 8,
               offset: Offset(0, 3).scale(widget.size / 100, widget.size / 100),
             )
           ],
