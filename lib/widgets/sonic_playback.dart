@@ -1,0 +1,210 @@
+import 'dart:math';
+
+import 'package:audio_service/audio_service.dart';
+import 'package:flutter/material.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:sonicear/audio/music_background_task.dart';
+import 'package:sonicear/audio/playback_utils.dart';
+import 'package:sonicear/widgets/app_playback_state.dart';
+import 'package:sonicear/widgets/sonic_cover.dart';
+
+class SonicPlayback extends StatefulWidget {
+  @override
+  _SonicPlaybackState createState() => _SonicPlaybackState();
+}
+
+class _SonicPlaybackState extends State<SonicPlayback> {
+  final BehaviorSubject<double> _dragPositionSubject =
+      BehaviorSubject.seeded(null);
+
+  @override
+  void dispose() {
+    super.dispose();
+    _dragPositionSubject.close();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: StreamBuilder<MediaItem>(
+          stream: AudioService.currentMediaItemStream,
+          builder: (context, snapshot) => Center(
+            child: Text(
+              !snapshot.hasData ? 'Not playing Anything' : snapshot.data.title,
+              style: Theme.of(context).textTheme.subtitle2,
+            ),
+          ),
+        ),
+        actions: [
+          PopupMenuButton(
+            itemBuilder: (context) => [],
+          )
+        ],
+        leading: IconButton(
+          icon: Icon(Icons.keyboard_arrow_down),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: StreamBuilder<AppPlaybackState>(
+              stream: AppPlaybackState.stateStream,
+              builder: (context, snapshot) {
+                final screenState = snapshot.data;
+                final queue = screenState?.queue;
+                final mediaItem = screenState?.currentSong;
+                final state = screenState?.playbackState;
+                final processingState =
+                    state?.processingState ?? AudioProcessingState.none;
+                final playing = state?.playing ?? false;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    if (mediaItem?.extras?.containsKey(kCoverId) ?? false)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 32),
+                        child: SonicCover(mediaItem?.extras[kCoverId],
+                            size:
+                                MediaQuery.of(context).size.width / 4 * 3 / 2),
+                      ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          mediaItem?.title ?? '',
+                          style: Theme.of(context).textTheme.headline5,
+                        ),
+                        Text(
+                          mediaItem?.artist ?? '',
+                          style: Theme.of(context).textTheme.headline6,
+                        ),
+                      ],
+                    ),
+                    // Text('$position / $duration'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        IconButton(
+                          icon: Icon(Icons.shuffle),
+                          iconSize: 35,
+                          onPressed: () {
+                            throw new StateError('not implemented');
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.skip_previous),
+                          iconSize: 35,
+                          onPressed: () {
+                            throw new StateError('not implemented');
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(playing ? Icons.pause : Icons.play_arrow),
+                          iconSize: 50,
+                          onPressed: () async {
+                            if (AudioService.running) {
+                              if (AudioService.playbackState.playing)
+                                await AudioService.pause();
+                              else
+                                await AudioService.play();
+                            } else {
+                              // TODO: scrap this
+                              final started = await startSonicearAudioTask();
+                              print('tried starting service: $started');
+                            }
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.skip_next),
+                          iconSize: 35,
+                          onPressed: () {
+                            throw new StateError('not implemented');
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.repeat),
+                          iconSize: 35,
+                          onPressed: () {
+                            throw new StateError('not implemented');
+                          },
+                        ),
+                      ],
+                    ),
+                    if (mediaItem != null) positionScrubber(mediaItem, state)
+                  ],
+                );
+              }),
+        ),
+      ),
+    );
+  }
+
+  Widget positionScrubber(MediaItem mediaItem, PlaybackState state) {
+    double seekPos;
+    return StreamBuilder(
+      stream: Rx.combineLatest2(_dragPositionSubject.stream,
+          Stream.periodic(Duration(milliseconds: 200)), (a, _) => a),
+      builder: (context, snapshot) {
+        final position =
+            snapshot.data ?? state.currentPosition.inMilliseconds.toDouble();
+        final duration = mediaItem?.duration?.inMilliseconds?.toDouble();
+
+        return Column(
+          children: <Widget>[
+            if (duration != null) ...[
+              SliderTheme(
+                data: SliderThemeData(
+                  thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
+                  thumbColor: Theme.of(context).primaryColor,
+                  trackHeight: 2,
+                ),
+                child: Slider(
+                  min: 0,
+                  max: duration,
+                  value: seekPos ?? max(0, min(position, duration)),
+                  inactiveColor: Colors.white24,
+                  activeColor: Colors.white,
+                  onChanged: (value) {
+                    _dragPositionSubject.add(value);
+                  },
+                  onChangeEnd: (value) {
+                    AudioService.seekTo(Duration(milliseconds: value.toInt()));
+                    seekPos = value;
+                    _dragPositionSubject.add(null);
+                  },
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(_buildTimestamp(state.currentPosition)),
+                    Text(_buildTimestamp(mediaItem.duration)),
+                  ],
+                ),
+              ),
+              // Text('${state.currentPosition}'),
+            ],
+
+            IconButton(
+              icon: Icon(Icons.queue_music),
+              onPressed: () {
+                throw StateError('not implemented queue view');
+              },
+            )
+          ],
+        );
+      },
+    );
+
+  }
+  String _buildTimestamp(Duration d) => '${d.inMinutes.floor()}:${(d.inSeconds % 60).floor()}';
+}
