@@ -1,6 +1,6 @@
 # sonicear
 
-A music player using the [Subsonic]() API focused on usability, offline availability and aesthetics.
+A music player using the [Subsonic](http://www.subsonic.org/pages/index.jsp) API focused on usability, offline availability and aesthetics.
 
 ## Project Status
 

@@ -1,7 +1,6 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:rxdart/rxdart.dart';
 import 'package:sonicear/widgets/app_playback_state.dart';
 import 'package:sonicear/widgets/sonic_playback.dart';
 
@@ -83,7 +82,5 @@ class PlaybackLine extends StatelessWidget {
             ],
           );
         });
-    // TODO: implement build
-    throw UnimplementedError();
   }
 }

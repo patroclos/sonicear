@@ -1,4 +1,3 @@
-import 'package:sonicear/db/appdb.dart';
 import 'package:sonicear/db/dao/sqflite_song_dao.dart';
 import 'package:sqflite/sqflite.dart';
 

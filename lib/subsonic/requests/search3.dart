@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:meta/meta.dart';
 import 'package:sonicear/subsonic/subsonic.dart';
 import 'package:http/http.dart' as http;
 
@@ -34,7 +33,7 @@ class Search3 extends BaseRequest<Search3Result> {
       ctx.version,
       Search3Result(
         (data['searchResult3']['song'] as List)
-            .map((song) => Song.parse(song))
+            .map((song) => Song.parse(song, serverId: ctx.serverId))
             .toList(),
       ),
     );

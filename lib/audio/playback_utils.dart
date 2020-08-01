@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:isolate';
-import 'dart:ui';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
@@ -26,7 +24,7 @@ Future downloadSong(Song song, SubsonicContext subsonic) async {
 
   final fileName = path.join((await getExternalStorageDirectory()).path, 'Music', '${song.artist}', '${song.album} ${song.track} - ${song.title}.${song.suffix}');
   Directory(path.dirname(fileName)).createSync(recursive: true);
-  final task = await FlutterDownloader.enqueue(
+  await FlutterDownloader.enqueue(
     url: uri,
     savedDir: path.dirname(fileName),
     showNotification: true,

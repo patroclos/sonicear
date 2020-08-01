@@ -35,8 +35,6 @@ class _SonicSearchState extends State<SonicSearch> {
     );
   }
 
-  Widget get _title => Text('Browse Songs');
-
   Widget get _searchField =>
       Padding(
         padding: const EdgeInsets.only(bottom: 8, left: 8),
@@ -51,7 +49,6 @@ class _SonicSearchState extends State<SonicSearch> {
             filled: true,
             fillColor: Colors.white30,
           ),
-          // style: TextStyle(color: Colors.white, fontSize: 16),
           onChanged: (q) {
             updateSearchQuery(q);
           },

@@ -24,6 +24,8 @@ class SongBloc extends Bloc<Map<String, dynamic>, SongState> {
       case 'evict':
         break;
     }
+
+    throw StateError('not implemented');
   }
 
 }

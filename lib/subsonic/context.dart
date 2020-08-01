@@ -2,12 +2,14 @@ import 'package:meta/meta.dart';
 import 'token.dart';
 
 class SubsonicContext {
+  final String serverId;
   final Uri endpoint;
   final String version = '1.15.0';
   final String user;
   final String _pass;
 
   SubsonicContext({
+    @required this.serverId,
     @required this.endpoint,
     @required this.user,
     @required String pass,

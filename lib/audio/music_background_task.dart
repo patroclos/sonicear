@@ -29,11 +29,13 @@ MediaControl _skipPrevCtrl = MediaControl(
   action: MediaAction.skipToPrevious,
 );
 
+/*
 MediaControl _stopCtrl = MediaControl(
   androidIcon: 'drawable/ic_action_stop',
   label: 'Stop',
   action: MediaAction.stop,
 );
+ */
 
 class MusicBackgroundTask extends BackgroundAudioTask {
   AudioPlayer _player = AudioPlayer();

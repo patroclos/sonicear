@@ -34,6 +34,7 @@ class SonicEarApp extends StatelessWidget {
       providers: [
         Provider(
           create: (_) => SubsonicContext(
+            serverId: ':memory:',
             endpoint: Uri.parse('http://192.168.2.106:8080/airsonic/'),
             user: 'app',
             pass: 'sonicear',

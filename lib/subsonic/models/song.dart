@@ -1,5 +1,4 @@
 import 'package:meta/meta.dart';
-import 'package:uuid/uuid.dart';
 
 class Song {
   final String id;

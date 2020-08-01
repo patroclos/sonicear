@@ -1,10 +1,7 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:meta/meta.dart';
-import 'package:sonicear/audio/audio.dart';
 import 'package:sonicear/db/dao/sqflite_server_dao.dart';
 import 'package:sonicear/subsonic/models/models.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:uuid/uuid.dart';
 
 class DbOfflineSong {
   final String songId;
@@ -96,9 +93,11 @@ class SqfliteSongDao {
     return Song.parse(row[0], serverId: row[0]['serverId']);
   }
 
+  /*
   Future<DbOfflineSong> downloadSong(PlayableSong playable) async {
     // playable.
   }
+   */
 
   Future<DbSong> load(String id) async {
     final rows =
