@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -49,13 +48,13 @@ class AppDb {
         ''');
     },
     (txn) async {
-      // TODO: replace artist and album text w/ reference to tables
       await txn.execute('''
           CREATE TABLE songs (
             id CHARACTER(16) NOT NULL,
             serverId CHARACTER(36) NOT NULL,
             title TEXT NOT NULL,
             duration INT NOT NULL,
+            suffix CHARACTER(8) NOT NULL,
             artist TEXT,
             album TEXT,
             track INT,
@@ -68,14 +67,6 @@ class AppDb {
               ON DELETE CASCADE
           )
         ''');
-
-      await txn.execute('''
-        CREATE TABLE offline_songs (
-          songId CHARACTER(36) PRIMARY KEY REFERENCES songs(id) ON DELETE CASCADE,
-          fileLocation TEXT NOT NULL,
-          coverLocation TEXT NOT NULL
-        )
-      ''');
     }
   ];
 

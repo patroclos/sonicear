@@ -6,6 +6,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:sonicear/audio/music_background_task.dart';
 import 'package:sonicear/audio/playback_utils.dart';
 import 'package:sonicear/widgets/app_playback_state.dart';
+import 'package:sonicear/widgets/queue_management_screen.dart';
 import 'package:sonicear/widgets/sonic_cover.dart';
 
 class SonicPlayback extends StatefulWidget {
@@ -67,7 +68,8 @@ class _SonicPlaybackState extends State<SonicPlayback> {
                   children: <Widget>[
                     if (mediaItem?.extras?.containsKey(kCoverId) ?? false)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 32, left: 20, right: 20, top: 20),
+                        padding: const EdgeInsets.only(
+                            bottom: 32, left: 20, right: 20, top: 20),
                         child: SonicCover(mediaItem?.extras[kCoverId],
                             size:
                                 MediaQuery.of(context).size.width / 4 * 3 / 2),
@@ -86,13 +88,16 @@ class _SonicPlaybackState extends State<SonicPlayback> {
                         ),
                       ],
                     ),
-                    if (mediaItem != null)
-                      positionScrubber(mediaItem, state),
-                    _playbackControlRow(playing),
+                    if (mediaItem != null) positionScrubber(mediaItem, state),
+                    if (AudioService.running) _playbackControlRow(playing),
                     IconButton(
                       icon: Icon(Icons.queue_music),
                       onPressed: () {
-                        throw StateError('not implemented queue view');
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => QueueManagementScreen(),
+                          ),
+                        );
                       },
                     )
                   ],
@@ -104,54 +109,54 @@ class _SonicPlaybackState extends State<SonicPlayback> {
   }
 
   Widget _playbackControlRow(bool playing) => Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: <Widget>[
-      IconButton(
-        icon: Icon(Icons.shuffle),
-        iconSize: 35,
-        onPressed: () {
-          throw new StateError('not implemented');
-        },
-      ),
-      IconButton(
-        icon: Icon(Icons.skip_previous),
-        iconSize: 35,
-        onPressed: () {
-          throw new StateError('not implemented');
-        },
-      ),
-      IconButton(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          IconButton(
+            icon: Icon(Icons.shuffle),
+            iconSize: 35,
+            onPressed: () {
+              throw new StateError('not implemented');
+            },
+          ),
+          _prevButton,
+          _playPauseButton(playing),
+          _nextButton,
+          _repeatButton
+        ],
+      );
+
+  Widget _prevButton = IconButton(
+    icon: Icon(Icons.skip_previous),
+    onPressed: () async {
+      await AudioService.skipToPrevious();
+    },
+  );
+
+  Widget _nextButton = IconButton(
+    icon: Icon(Icons.skip_next),
+    onPressed: () async {
+      await AudioService.skipToNext();
+    },
+  );
+
+  Widget _repeatButton = IconButton(
+    icon: Icon(Icons.repeat),
+    iconSize: 35,
+    onPressed: () async {
+      await AudioService.customAction('cycle-repeat');
+    },
+  );
+
+  Widget _playPauseButton(bool playing) => IconButton(
         icon: Icon(playing ? Icons.pause : Icons.play_arrow),
         iconSize: 50,
         onPressed: () async {
-          if (AudioService.running) {
-            if (AudioService.playbackState.playing)
-              await AudioService.pause();
-            else
-              await AudioService.play();
-          } else {
-            // TODO: scrap this
-            final started = await startSonicearAudioTask();
-            print('tried starting service: $started');
-          }
+          if (playing)
+            await AudioService.play();
+          else
+            await AudioService.pause();
         },
-      ),
-      IconButton(
-        icon: Icon(Icons.skip_next),
-        iconSize: 35,
-        onPressed: () {
-          throw new StateError('not implemented');
-        },
-      ),
-      IconButton(
-        icon: Icon(Icons.repeat),
-        iconSize: 35,
-        onPressed: () {
-          throw new StateError('not implemented');
-        },
-      ),
-    ],
-  );
+      );
 
   Widget positionScrubber(MediaItem mediaItem, PlaybackState state) {
     double seekPos;
@@ -201,12 +206,12 @@ class _SonicPlaybackState extends State<SonicPlayback> {
               ),
               // Text('${state.currentPosition}'),
             ],
-
           ],
         );
       },
     );
-
   }
-  String _buildTimestamp(Duration d) => '${d.inMinutes.floor()}:${(d.inSeconds % 60).floor()}';
+
+  String _buildTimestamp(Duration d) =>
+      '${d.inMinutes.floor()}:${(d.inSeconds % 60).floor()}';
 }

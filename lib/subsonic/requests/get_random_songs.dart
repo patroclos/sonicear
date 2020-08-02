@@ -29,7 +29,6 @@ class GetRandomSongs extends BaseRequest<List<Song>> {
         'size': '$size',
       },
     ));
-    print(response.body);
     final data = jsonDecode(response.body)['subsonic-response'];
 
     if (data['status'] != 'ok') throw StateError(data);

@@ -14,12 +14,13 @@ class GetCoverArt extends BaseRequest<Uint8List> {
 
   Uri _getImageUri(SubsonicContext ctx) {
     var uri = ctx.endpoint.resolve("rest/getCoverArt");
-    uri = ctx.applyParameters(uri);
-    uri = uri.replace(
-        queryParameters: Map.from(uri.queryParameters)..['id'] = '$id');
-    if (size != null)
-      uri = uri.replace(
-          queryParameters: Map.from(uri.queryParameters)..['size'] = '$size');
+    uri = ctx.buildRequestUri(
+      'getCoverArt',
+      params: {
+        'id': '$id',
+        if (size != null) 'size': '$size',
+      },
+    );
 
     return uri;
   }

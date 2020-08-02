@@ -14,6 +14,7 @@ import 'package:sonicear/widgets/sonic_albumlist.dart';
 import 'package:sonicear/widgets/sonic_playback.dart';
 import 'package:sonicear/widgets/sonic_search.dart';
 import 'package:sonicear/widgets/sonic_songlist.dart';
+import 'package:sonicear/usecases/extensions.dart';
 
 import 'package:flutter_downloader/flutter_downloader.dart';
 
@@ -26,23 +27,30 @@ void main() async {
   runApp(SonicEarApp());
 }
 
+final devMemoryServer = SubsonicContext(
+  serverId: '--dev-memory-server--',
+  endpoint: Uri(
+      scheme: 'http', host: '192.168.2.106', port: 8080, path: '/airsonic/'),
+  name: 'Development Server',
+  user: 'app',
+  pass: 'sonicear',
+);
+
 class SonicEarApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    final repoPromise = AppDb.instance.database.then(
+        createSqfliteRepository); //createSqfliteRepository(await AppDb.instance.database);
     return MultiProvider(
       providers: [
-        Provider(
-          create: (_) => SubsonicContext(
-            serverId: ':memory:',
-            endpoint: Uri.parse('http://192.168.2.106:8080/airsonic/'),
-            user: 'app',
-            pass: 'sonicear',
-          ),
-        ),
+        FutureProvider(create: (context) async {
+          await (await repoPromise).servers.ensureServerExists(devMemoryServer);
+
+          return devMemoryServer;
+        }),
         FutureProvider(
-          create: (_) async =>
-              createSqfliteRepository(await AppDb.instance.database),
+          create: (_) => repoPromise,
         )
       ],
       child: MaterialApp(
@@ -82,12 +90,27 @@ class _MainAppScreenState extends State<MainAppScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                icon: Icon(Icons.settings),
+                onPressed: () {
+                  // TODO: open settings page for configuring servers, etc
+                },
+              ),
+            ],
+          ),
           FlatButton(
             child: Text('Random Songs'),
             onPressed: () async {
               final ctx = context.read<SubsonicContext>();
-              final songs =
-                  (await sub_req.GetRandomSongs(size: 30).run(ctx)).data;
+              final songs = (await sub_req.GetRandomSongs(size: 30).run(ctx))
+                  .data
+                  .map((song) => song.toDbSong())
+                  .toList();
+
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => Scaffold(
@@ -123,6 +146,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
               );
             },
           ),
+          /*
           FlatButton(
             child: Text('Albums'),
             onPressed: () async {
@@ -139,6 +163,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
               );
             },
           ),
+          */
         ],
       );
     }),

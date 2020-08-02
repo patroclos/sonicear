@@ -71,7 +71,7 @@ class GetArtistsRequest extends BaseRequest<GetArtistsData> {
   @override
   Future<SubsonicResponse<GetArtistsData>> run(SubsonicContext ctx) async {
     var uri = ctx.endpoint.resolve("rest/getArtists");
-    uri = ctx.applyParameters(uri);
+    uri = ctx.applyUriParams(uri);
     if (musicFolderId != null)
       uri = uri.replace(queryParameters: Map.from(uri.queryParameters)..['musicFolderId'] = '$musicFolderId');
 

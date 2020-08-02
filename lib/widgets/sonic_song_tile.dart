@@ -1,11 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
+import 'package:sonicear/db/dao/sqflite_song_dao.dart';
 import 'package:sonicear/subsonic/models/song.dart';
 import 'package:sonicear/widgets/sonic_cover.dart';
 
 class SonicSongTile extends StatelessWidget {
-  final Song song;
+  final DbSong song;
   final GestureTapCallback onTap;
   final GestureTapCallback onDoubleTap;
   final GestureLongPressCallback onLongPress;
@@ -33,7 +34,7 @@ class SonicSongTile extends StatelessWidget {
             Expanded(
               flex: 1,
               child: SonicCover(
-                song.coverArt,
+                song.coverId,
                 size: 35,
                 child: Text(song.title),
               ),

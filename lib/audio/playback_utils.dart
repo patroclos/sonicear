@@ -4,14 +4,16 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sonicear/audio/music_background_task.dart';
+import 'package:sonicear/db/dao/sqflite_song_dao.dart';
 import 'package:sonicear/subsonic/subsonic.dart';
 import 'package:sonicear/usecases/mediaitem_from_song.dart';
 import 'package:path/path.dart' as path;
 
 const String kCoverId = 'cover-id';
+const String kInternalSong = 'internal-song';
 const String kStreamUrl = 'stream-url';
 
-Future<bool> playSong(Song song, MediaItemFromSong song2media) async {
+Future<bool> playSong(DbSong song, MediaItemFromSong song2media) async {
   if (!AudioService.running && !await startSonicearAudioTask()) return false;
 
   await AudioService.playMediaItem(song2media(song));
@@ -19,7 +21,7 @@ Future<bool> playSong(Song song, MediaItemFromSong song2media) async {
 }
 
 
-Future downloadSong(Song song, SubsonicContext subsonic) async {
+Future downloadSong(DbSong song, SubsonicContext subsonic) async {
   final uri = subsonic.buildRequestUri('download', params: {'id': song.id}).toString();
 
   final fileName = path.join((await getExternalStorageDirectory()).path, 'Music', '${song.artist}', '${song.album} ${song.track} - ${song.title}.${song.suffix}');

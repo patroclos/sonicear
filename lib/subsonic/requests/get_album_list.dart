@@ -33,7 +33,6 @@ class GetAlbumList extends BaseRequest<List<Album>> {
     ));
 
     final data = jsonDecode(response.body)['subsonic-response'];
-    print(data['albumList']['album'][0]);
 
     if (data['status'] != 'ok') throw StateError(data);
 

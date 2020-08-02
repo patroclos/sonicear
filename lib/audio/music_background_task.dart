@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:sonicear/audio/audio.dart';
 
 MediaControl _playCtrl = MediaControl(
   androidIcon: 'drawable/ic_action_play_arrow',
@@ -149,6 +150,13 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   @override
   Future<void> onSkipToPrevious() => _skip(-1);
 
+
+  @override
+  void onSkipToQueueItem(String mediaId) {
+    final idx = _queue.indexWhere((item) => item.id == mediaId);
+    _skip(idx - _queueIndex);
+  }
+
   Future<void> _skip(int offset) async {
     final newPos = _queueIndex + offset;
     if (newPos < 0 || newPos >= _queue.length) return;
@@ -157,12 +165,16 @@ class MusicBackgroundTask extends BackgroundAudioTask {
     else if (_playing) await _player.stop();
 
     _queueIndex = newPos;
+
     AudioServiceBackground.setMediaItem(mediaItem);
+    AudioServiceBackground.setQueue(_queue.skip(_queueIndex + 1).toList());
+
     _skipState = offset > 0
         ? AudioProcessingState.skippingToNext
         : AudioProcessingState.skippingToPrevious;
-    await _player.setUrl(mediaItem.extras['stream-url']);
+    await _player.setUrl(mediaItem.extras[kStreamUrl]);
     _skipState = null;
+
 
     if (_playing)
       onPlay();
@@ -269,7 +281,6 @@ class MusicBackgroundTask extends BackgroundAudioTask {
 
   @override
   Future<void> onUpdateQueue(List<MediaItem> queue) {
-    print(queue);
     _queue.clear();
     _queue.addAll(queue);
     _queueIndex=-1;
@@ -292,6 +303,5 @@ Future<bool> startSonicearAudioTask() {
     androidNotificationColor: Colors.green.value,
     androidNotificationIcon: 'mipmap/ic_launcher',
     androidEnableQueue: true,
-
   );
 }

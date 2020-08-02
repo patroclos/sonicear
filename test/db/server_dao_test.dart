@@ -17,7 +17,7 @@ void main() async {
       user: 'sonicear',
       pass: 'app',
     );
-    await dao.createServer(server);
+    await dao.ensureServerExists(server);
 
     final out = await dao.getServer(server.id);
     expect(out, equals(server));
@@ -40,6 +40,6 @@ void main() async {
         album: 'app',
         duration: Duration(seconds: 88)
         );
-    expect(()=>dao.storeSong(song), throwsException);
+    expect(()=>dao.ensureSongsExist(song), throwsException);
   });
 }

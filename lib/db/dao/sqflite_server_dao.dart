@@ -1,4 +1,5 @@
 import 'package:meta/meta.dart';
+import 'package:sonicear/subsonic/context.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
@@ -83,25 +84,20 @@ class SqfliteServerDao {
 
   SqfliteServerDao(Database database) : _db = database;
 
-  Future<List<ServerInfo>> listServers() async {
+  Future<List<SubsonicContext>> listServers() async {
     final rows = await _db.query(TABLE_NAME);
-    return rows.map((row) => ServerInfo.parse(row)).toList();
+    return rows.map((row) => SubsonicContext.parse(row)).toList();
   }
 
-  Future<ServerInfo> createServer(ServerInfo info) async {
-    await _db.insert(TABLE_NAME, {
-      'id': info.id,
-      'name': info.name,
-      'uri': info.uri.toString(),
-      'user': info.user,
-      'pass': info.pass,
-    });
+  Future<SubsonicContext> ensureServerExists(SubsonicContext info) async {
+    await _db.insert(TABLE_NAME, info.serialized, conflictAlgorithm: ConflictAlgorithm.replace);
     return info;
   }
 
-  Future<ServerInfo> getServer(String id) async {
+  Future<SubsonicContext> getServer(String id) async {
     final rows = await _db.query(TABLE_NAME, where: 'id = ?', whereArgs: [id]);
+    final row = rows[0];
 
-    return ServerInfo.parse(rows[0]);
+    return SubsonicContext.parse(row);
   }
 }

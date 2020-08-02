@@ -2,12 +2,12 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sonicear/audio/audio.dart';
+import 'package:sonicear/db/dao/sqflite_song_dao.dart';
 import 'package:sonicear/usecases/mediaitem_from_song.dart';
 import 'package:sonicear/widgets/sonic_song_tile.dart';
-import '../subsonic/models/models.dart';
 
 class SonicSearch extends StatefulWidget {
-  final Future<Iterable<Song>> Function(String query) search;
+  final Future<Iterable<DbSong>> Function(String query) search;
 
   SonicSearch(this.search);
 
@@ -20,7 +20,7 @@ class _SonicSearchState extends State<SonicSearch> {
   bool _searching = false;
   String _query = '';
 
-  final items = <Song>[];
+  final items = <DbSong>[];
 
   @override
   void dispose() {
@@ -41,11 +41,16 @@ class _SonicSearchState extends State<SonicSearch> {
         child: TextField(
           controller: _queryCtrl,
           autofocus: _query.isEmpty,
+          keyboardType: TextInputType.text,
           decoration: InputDecoration(
             hintText: 'Search songs...',
             border: InputBorder.none,
             hintStyle: TextStyle(color: Colors.white30),
             icon: Icon(Icons.search),
+            suffixIcon: IconButton(
+              icon: Icon(Icons.clear),
+              onPressed: () => _queryCtrl.clear(),
+            ),
             filled: true,
             fillColor: Colors.white30,
           ),
@@ -87,8 +92,8 @@ class _SonicSearchState extends State<SonicSearch> {
               return SonicSongTile(
                 song,
                 onTap: () {
-                  print(song);
-                  playSong(song, OnlineMediaItemFromSong(context.read()));
+                  final mediaItem = OnlineMediaItemFromSong(context.read());
+                  playSong(song, mediaItem);
                 },
                 trailing: PopupMenuButton<String>(
                   itemBuilder: (context) =>
@@ -136,7 +141,6 @@ class _SonicSearchState extends State<SonicSearch> {
     setState(() {
       items.clear();
       items.addAll(results);
-      print(items);
     });
   }
 
