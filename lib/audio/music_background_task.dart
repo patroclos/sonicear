@@ -267,7 +267,10 @@ class MusicBackgroundTask extends BackgroundAudioTask {
     _queueIndex = -1;
     _queue.add(mediaItem);
      */
-    _queue.insert(_queueIndex, mediaItem);
+    if(_queueIndex == -1)
+      _queue.insert(0, mediaItem);
+    else
+      _queue.insert(_queueIndex, mediaItem);
     onSkipToNext();
   }
 
