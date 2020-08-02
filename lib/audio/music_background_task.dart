@@ -107,7 +107,6 @@ class MusicBackgroundTask extends BackgroundAudioTask {
       },
     );
 
-    AudioServiceBackground.setQueue(_queue);
     onSkipToNext();
   }
 
@@ -167,7 +166,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
     _queueIndex = newPos;
 
     AudioServiceBackground.setMediaItem(mediaItem);
-    AudioServiceBackground.setQueue(_queue.skip(_queueIndex + 1).toList());
+    _updateQueue();
 
     _skipState = offset > 0
         ? AudioProcessingState.skippingToNext
@@ -263,20 +262,29 @@ class MusicBackgroundTask extends BackgroundAudioTask {
 
   @override
   void onPlayMediaItem(MediaItem mediaItem) {
+    /*
     _queue.clear();
     _queueIndex = -1;
     _queue.add(mediaItem);
+     */
+    _queue.insert(_queueIndex, mediaItem);
     onSkipToNext();
   }
 
   @override
   void onAddQueueItem(MediaItem mediaItem) {
     _queue.add(mediaItem);
+    _updateQueue();
   }
 
   @override
   void onAddQueueItemAt(MediaItem mediaItem, int index) {
     _queue.insert(index + _queueIndex, mediaItem);
+    _updateQueue();
+  }
+
+  void _updateQueue() {
+    AudioServiceBackground.setQueue(_queue.skip(_queueIndex + 1).toList());
   }
 
   @override
