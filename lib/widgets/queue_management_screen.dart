@@ -39,22 +39,26 @@ class QueueManagementScreen extends StatelessWidget {
               ),
               Text('Coming Up', style: h6Style),
               StreamBuilder<List<DbSong>>(
-                stream: AudioService.queueStream.map((lst) => lst.map((item) => item.extractDbSong()).toList()),
-                initialData: AudioService.queue?.map((item) => item.extractDbSong())?.toList() ?? [],
+                stream: AudioService.queueStream.map(
+                    (lst) => lst.map((item) => item.extractDbSong()).toList()),
+                initialData: AudioService.queue
+                        ?.map((item) => item.extractDbSong())
+                        ?.toList() ??
+                    [],
                 builder: (context, snapshot) {
-                  print(snapshot);
-                  if(snapshot.data == null)
-                    return Text('nothing');
+                  if (snapshot.data == null) return Text('nothing');
 
                   return Expanded(
                     child: ListView.builder(
                       itemCount: snapshot.data.length,
                       itemBuilder: (context, idx) {
                         final song = snapshot.data[idx];
-                        return SonicSongTile(song, onTap: (){
-                          AudioService.skipToQueueItem(song.id);
-                          // AudioService.playMediaItem();
-                        });
+                        return SonicSongTile(
+                          song,
+                          onTap: () {
+                            AudioService.skipToQueueItem(song.id);
+                          },
+                        );
                       },
                     ),
                   );

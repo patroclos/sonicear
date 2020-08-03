@@ -19,7 +19,8 @@ class SonicSongTile extends StatelessWidget {
     this.onDoubleTap,
     this.onLongPress,
     this.trailing,
-  }) : assert(song != null);
+  })  : assert(song != null),
+        super(key: ValueKey(song.id));
 
   @override
   Widget build(BuildContext context) {
