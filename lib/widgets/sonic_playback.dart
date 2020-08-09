@@ -152,9 +152,9 @@ class _SonicPlaybackState extends State<SonicPlayback> {
         iconSize: 50,
         onPressed: () async {
           if (playing)
-            await AudioService.play();
-          else
             await AudioService.pause();
+          else
+            await AudioService.play();
         },
       );
 
@@ -213,5 +213,5 @@ class _SonicPlaybackState extends State<SonicPlayback> {
   }
 
   String _buildTimestamp(Duration d) =>
-      '${d.inMinutes.floor()}:${(d.inSeconds % 60).floor()}';
+      '${d.inMinutes.floor()}:${(d.inSeconds % 60).floor().toString().padLeft(2, '0')}';
 }

@@ -67,6 +67,12 @@ class AppDb {
               ON DELETE CASCADE
           )
         ''');
+    },
+    (txn) async {
+      await txn.execute('''
+        ALTER TABLE subsonic_servers
+        ADD active TINYINT NOT NULL CHECK (active IN (0,1)) DEFAULT 0
+      ''');
     }
   ];
 

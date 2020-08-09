@@ -10,6 +10,7 @@ import 'package:sonicear/subsonic/requests/requests.dart' as sub_req;
 import 'package:sonicear/usecases/mediaitem_from_song.dart';
 import 'package:sonicear/usecases/search_music.dart';
 import 'package:sonicear/widgets/playback_line.dart';
+import 'package:sonicear/widgets/settings_screen.dart';
 import 'package:sonicear/widgets/sonic_albumlist.dart';
 import 'package:sonicear/widgets/sonic_playback.dart';
 import 'package:sonicear/widgets/sonic_search.dart';
@@ -27,6 +28,7 @@ void main() async {
   runApp(SonicEarApp());
 }
 
+/*
 final devMemoryServer = SubsonicContext(
   serverId: '--dev-memory-server--',
   endpoint: Uri(
@@ -35,6 +37,7 @@ final devMemoryServer = SubsonicContext(
   user: 'app',
   pass: 'sonicear',
 );
+ */
 
 class SonicEarApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -44,11 +47,19 @@ class SonicEarApp extends StatelessWidget {
         createSqfliteRepository); //createSqfliteRepository(await AppDb.instance.database);
     return MultiProvider(
       providers: [
-        FutureProvider(create: (context) async {
-          await (await repoPromise).servers.ensureServerExists(devMemoryServer);
+        FutureProvider(
+          create: (context) async {
+            final dao = (await repoPromise).servers;
+            final active = await dao.getActiveServer();
+            if (active != null) return active;
 
-          return devMemoryServer;
-        }),
+            final servers = await dao.listServers();
+            if (servers.isEmpty) return null;
+
+            await dao.setActiveServer(servers.first);
+            return servers.first;
+          },
+        ),
         FutureProvider(
           create: (_) => repoPromise,
         )
@@ -97,6 +108,9 @@ class _MainAppScreenState extends State<MainAppScreen> {
               IconButton(
                 icon: Icon(Icons.settings),
                 onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => SettingsScreen()),
+                  );
                   // TODO: open settings page for configuring servers, etc
                 },
               ),

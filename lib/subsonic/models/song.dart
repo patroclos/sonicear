@@ -51,10 +51,10 @@ class Song {
 
   factory Song.parse(Map<String, dynamic> data, {@required String serverId}) {
     return Song(
-      id: data['id'],
+      id: data['id'].toString(),
       serverId: serverId,
-      parent: data['parent'],
-      isDir: data['isDir'],
+      parent: data['parent'].toString(),
+      isDir: data['isDir'] == true || data['isDir'].toString().toLowerCase() == 'true',
       title: data['title'],
       album: data['album'],
       artist: data['artist'],
@@ -70,8 +70,8 @@ class Song {
       isVideo: data['isVideo'],
       playCount: data['playCount'],
       created: DateTime.parse(data['created']),
-      albumId: data['albumId'],
-      artistId: data['artistId'],
+      albumId: data['albumId'].toString(),
+      artistId: data['artistId'].toString(),
       type: data['type'],
     );
   }
