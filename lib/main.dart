@@ -43,10 +43,13 @@ class SonicEarApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    final repoPromise = AppDb.instance.database.then(
-        createSqfliteRepository); //createSqfliteRepository(await AppDb.instance.database);
+    final repoPromise = AppDb.instance.database.then(createSqfliteRepository);
+
     return MultiProvider(
       providers: [
+        FutureProvider(
+          create: (_) => repoPromise,
+        ),
         FutureProvider(
           create: (context) async {
             final dao = (await repoPromise).servers;
@@ -60,9 +63,6 @@ class SonicEarApp extends StatelessWidget {
             return servers.first;
           },
         ),
-        FutureProvider(
-          create: (_) => repoPromise,
-        )
       ],
       child: MaterialApp(
         title: 'Sonic Ear',
