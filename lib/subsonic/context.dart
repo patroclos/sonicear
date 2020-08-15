@@ -28,12 +28,12 @@ class SubsonicContext {
   }
 
   Map<String, dynamic> get serialized => {
-        'id': serverId,
-        'name': name,
-        'uri': endpoint.toString(),
-        'user': user,
-        'pass': _pass,
-      };
+    'id': serverId,
+    'name': name,
+    'uri': endpoint.toString(),
+    'user': user,
+    'pass': _pass,
+  };
 
   // AuthToken get token => AuthToken(_pass);
   final AuthToken token;
@@ -60,4 +60,25 @@ class SubsonicContext {
       queryParameters: Map.from(uri.queryParameters)..addAll(params),
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is SubsonicContext &&
+              runtimeType == other.runtimeType &&
+              serverId == other.serverId &&
+              name == other.name &&
+              endpoint == other.endpoint &&
+              version == other.version &&
+              user == other.user &&
+              _pass == other._pass;
+
+  @override
+  int get hashCode =>
+      serverId.hashCode ^
+      name.hashCode ^
+      endpoint.hashCode ^
+      version.hashCode ^
+      user.hashCode ^
+      _pass.hashCode;
 }
