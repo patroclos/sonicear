@@ -31,12 +31,12 @@ class AppDb {
   static Future create(Database db, {int version}) {
     return Future.forEach(
       upgrades.take(version ?? upgrades.length),
-          (up) => db.transaction((txn) => up(txn)),
+      (up) => db.transaction((txn) => up(txn)),
     );
   }
 
   static final upgrades = <Future Function(Transaction)>[
-        (txn) async {
+    (txn) async {
       await txn.execute('''
           CREATE TABLE subsonic_servers (
             id CHARACTER(36) PRIMARY KEY,
@@ -47,7 +47,7 @@ class AppDb {
           )
         ''');
     },
-        (txn) async {
+    (txn) async {
       await txn.execute('''
           CREATE TABLE songs (
             id CHARACTER(16) NOT NULL,
@@ -68,19 +68,20 @@ class AppDb {
           )
         ''');
     },
-        (txn) async {
+    (txn) async {
       await txn.execute('''
         ALTER TABLE subsonic_servers
         ADD active TINYINT NOT NULL CHECK (active IN (0,1)) DEFAULT 0
       ''');
+    },
     }
   ];
 
   static Future upgrade(Database db, int from, int to) async {
     await Future.forEach<MapEntry<int, Future Function(Transaction)>>(
       upgrades.asMap().entries,
-          (kv) {
-        if (kv.key < to)
+      (kv) {
+        if (kv.key >= from && kv.key < to)
           return db.transaction(kv.value).then((_) => true);
         else
           return true;
