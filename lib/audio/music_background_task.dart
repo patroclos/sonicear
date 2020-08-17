@@ -40,8 +40,10 @@ MediaControl _stopCtrl = MediaControl(
 
 class MusicBackgroundTask extends BackgroundAudioTask {
   AudioPlayer _player = AudioPlayer();
+  ConcatenatingAudioSource _audioSource =
+      ConcatenatingAudioSource(children: []);
 
-  List<MediaControl> get controls => _playing
+  List<MediaControl> get controls => (_playing ?? false)
       ? [
           _skipPrevCtrl,
           _pauseCtrl,
@@ -63,51 +65,63 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   final _queue = <MediaItem>[];
 
   bool get hasNext => _queueIndex + 1 < _queue.length;
+
   //bool get hasNext => _queue.isNotEmpty;
 
   bool get hasPrev => _queueIndex > 0;
 
-  MediaItem get mediaItem => _queue[_queueIndex];
+  MediaItem get mediaItem => _queueIndex == -1 ? null : _queue[_queueIndex];
 
-  StreamSubscription<AudioPlaybackState> _playerStateSub;
-  StreamSubscription<AudioPlaybackEvent> _eventSub;
+  StreamSubscription<PlayerState> _playerStateSub;
+  StreamSubscription<PlaybackEvent> _eventSub;
+  StreamSubscription<SequenceState> _sequenceSub;
 
   @override
-  void onStart(Map<String, dynamic> params) {
-    _playerStateSub = _player.playbackStateStream
-        .where((event) => event == AudioPlaybackState.completed)
+  Future<dynamic> onCustomAction(String name, arguments) async {
+    switch (name) {
+      case 'set-loopmode':
+        print(arguments);
+        break;
+      default:
+        throw Exception('Unknown custom audio service action: $name');
+    }
+  }
+
+  @override
+  void onStart(Map<String, dynamic> params) async {
+    _playerStateSub = _player.playerStateStream
+        .where((event) =>
+            event.playing && event.processingState == ProcessingState.completed)
         .listen(
       (event) {
         _handlePlaybackCompleted();
       },
     );
 
+    _sequenceSub = _player.sequenceStateStream.listen((state) {
+      if(state == null)
+        return;
+      if (_queueIndex != state.currentIndex) {
+        _queueIndex = state.currentIndex;
+        AudioServiceBackground.setMediaItem(mediaItem);
+      }
+      AudioServiceBackground.setQueue(_queue.skip(_queueIndex + 1).toList());
+    });
+
     _eventSub = _player.playbackEventStream.listen(
       (event) {
-        final bufferState =
-            event.buffering ? AudioProcessingState.buffering : null;
+        final isBuffering = event.processingState == ProcessingState.buffering;
+        final bufferState = isBuffering ? AudioProcessingState.buffering : null;
 
-        switch (event.state) {
-          case AudioPlaybackState.paused:
-          case AudioPlaybackState.playing:
-            _setState(
-              processingState: bufferState ?? AudioProcessingState.ready,
-              position: event.position,
-            );
-            break;
-          case AudioPlaybackState.connecting:
-            _setState(
-              processingState: _skipState ?? AudioProcessingState.connecting,
-              position: event.position,
-            );
-            break;
-          default:
-            break;
-        }
+        _setState(
+          processingState: bufferState ?? AudioProcessingState.ready,
+          position: _player.position,
+        );
       },
     );
 
-    onSkipToNext();
+    await _player.load(_audioSource);
+    _player.setLoopMode(LoopMode.off);
   }
 
   Future _setState({
@@ -115,7 +129,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
     Duration position,
     Duration bufferedPosition,
   }) async {
-    position = position ?? _player.playbackEvent.position;
+    position = position ?? _player.position;
 
     await AudioServiceBackground.setState(
       controls: controls,
@@ -124,23 +138,14 @@ class MusicBackgroundTask extends BackgroundAudioTask {
           processingState ?? AudioServiceBackground.state.processingState,
       playing: _playing ?? false,
       position: position,
-      bufferedPosition: bufferedPosition ?? position,
+      bufferedPosition: bufferedPosition ?? _player.bufferedPosition,
       speed: _player.speed,
     );
   }
 
   void _handlePlaybackCompleted() {
-    if (hasNext)
-      onSkipToNext();
-    else if (hasPrev){
-      // reshuffle, restart
-      _queue.sort((a,b)=>Random.secure().nextInt(2) - 1);
-      _queueIndex = -1;
-      onSkipToNext();
-    }
-    else
-      onStop();
-      // onStop();
+    // onStop();
+    // TODO: we're not stopping here atm, since this gets triggered pretty early bc of the empty concatenation source
   }
 
   @override
@@ -148,7 +153,6 @@ class MusicBackgroundTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSkipToPrevious() => _skip(-1);
-
 
   @override
   void onSkipToQueueItem(String mediaId) {
@@ -161,19 +165,12 @@ class MusicBackgroundTask extends BackgroundAudioTask {
     if (newPos < 0 || newPos >= _queue.length) return;
     if (_playing == null)
       _playing = true;
-    else if (_playing) await _player.stop();
-
-    _queueIndex = newPos;
-
-    AudioServiceBackground.setMediaItem(mediaItem);
-    _updateQueue();
 
     _skipState = offset > 0
         ? AudioProcessingState.skippingToNext
         : AudioProcessingState.skippingToPrevious;
-    await _player.setUrl(mediaItem.extras[kStreamUrl]);
+    await _player.seek(Duration.zero, index: newPos);
     _skipState = null;
-
 
     if (_playing)
       onPlay();
@@ -214,6 +211,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
     _playing = false;
     _playerStateSub.cancel();
     _eventSub.cancel();
+    _sequenceSub.cancel();
     await _setState(processingState: AudioProcessingState.stopped);
     await super.onStop();
   }
@@ -261,46 +259,54 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   }
 
   @override
-  void onPlayMediaItem(MediaItem mediaItem) {
-    /*
-    _queue.clear();
-    _queueIndex = -1;
-    _queue.add(mediaItem);
-     */
-    if(_queueIndex == -1)
-      _queue.insert(0, mediaItem);
-    else
-      _queue.insert(_queueIndex, mediaItem);
+  void onPlayMediaItem(MediaItem mediaItem) async {
+    final insertIdx = _queueIndex == -1 ? 0 : (_queueIndex + 1);
+    _queue.insert(insertIdx, mediaItem);
+    await _audioSource.insert(
+      insertIdx,
+      AudioSource.uri(
+        Uri.parse(mediaItem.extras[kStreamUrl]),
+      ),
+    );
+
     onSkipToNext();
   }
 
   @override
-  void onAddQueueItem(MediaItem mediaItem) {
+  void onAddQueueItem(MediaItem mediaItem) async {
     _queue.add(mediaItem);
-    _updateQueue();
+    await _audioSource.add(
+      AudioSource.uri(
+        Uri.parse(mediaItem.extras[kStreamUrl]),
+      ),
+    );
   }
 
   @override
-  void onAddQueueItemAt(MediaItem mediaItem, int index) {
+  void onAddQueueItemAt(MediaItem mediaItem, int index) async {
     _queue.insert(index + _queueIndex, mediaItem);
-    _updateQueue();
-  }
-
-  void _updateQueue() {
-    AudioServiceBackground.setQueue(_queue.skip(_queueIndex + 1).toList());
+    await _audioSource.insert(
+      index + _queueIndex,
+      AudioSource.uri(
+        Uri.parse(mediaItem.extras[kStreamUrl]),
+      ),
+    );
   }
 
   @override
-  Future<void> onUpdateQueue(List<MediaItem> queue) {
+  Future<void> onUpdateQueue(List<MediaItem> queue) async {
     _queue.clear();
     _queue.addAll(queue);
-    _queueIndex=-1;
-    // TODO: probably we shouldn't skip yet
-    onSkipToNext();
 
-    return Future.value();
+    final size = _audioSource.length;
+    await _audioSource.addAll((queue.map(_sourceFromItem)).toList());
+    if(size > 0)
+      _audioSource.removeRange(0, size);
   }
 
+  AudioSource _sourceFromItem(MediaItem item) {
+    return AudioSource.uri(Uri.parse(item.extras[kStreamUrl]));
+  }
 }
 
 void _taskEntrypoint() async {
