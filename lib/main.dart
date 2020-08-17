@@ -1,6 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sonicear/audio/audio.dart';
 import 'package:sonicear/audio/playback_utils.dart';
 import 'package:sonicear/db/appdb.dart';
 import 'package:sonicear/db/repository.dart';
@@ -11,7 +12,6 @@ import 'package:sonicear/usecases/mediaitem_from_song.dart';
 import 'package:sonicear/usecases/search_music.dart';
 import 'package:sonicear/widgets/playback_line.dart';
 import 'package:sonicear/widgets/settings_screen.dart';
-import 'package:sonicear/widgets/sonic_albumlist.dart';
 import 'package:sonicear/widgets/sonic_playback.dart';
 import 'package:sonicear/widgets/sonic_search.dart';
 import 'package:sonicear/widgets/sonic_songlist.dart';
@@ -24,6 +24,7 @@ void main() async {
   await FlutterDownloader.initialize(
     debug: true,
   );
+  AudioServiceLoopMode.connect();
 
   runApp(SonicEarApp());
 }

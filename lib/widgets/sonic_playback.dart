@@ -2,8 +2,9 @@ import 'dart:math';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:sonicear/audio/music_background_task.dart';
+import 'package:sonicear/audio/audio.dart';
 import 'package:sonicear/audio/playback_utils.dart';
 import 'package:sonicear/widgets/app_playback_state.dart';
 import 'package:sonicear/widgets/queue_management_screen.dart';
@@ -56,11 +57,8 @@ class _SonicPlaybackState extends State<SonicPlayback> {
               stream: AppPlaybackState.stateStream,
               builder: (context, snapshot) {
                 final screenState = snapshot.data;
-                final queue = screenState?.queue;
                 final mediaItem = screenState?.currentSong;
                 final state = screenState?.playbackState;
-                final processingState =
-                    state?.processingState ?? AudioProcessingState.none;
                 final playing = state?.playing ?? false;
 
                 return Column(
@@ -139,11 +137,32 @@ class _SonicPlaybackState extends State<SonicPlayback> {
     },
   );
 
-  Widget _repeatButton = IconButton(
-    icon: Icon(Icons.repeat),
-    iconSize: 35,
-    onPressed: () async {
-      await AudioService.customAction('cycle-repeat');
+  Widget _repeatButton = StreamBuilder<LoopMode>(
+    stream: AudioServiceLoopMode.loopModeStream,
+    builder: (context, snapshot) {
+      final order = [
+        LoopMode.all,
+        LoopMode.one,
+        LoopMode.off,
+      ];
+      final idx = order.indexOf(snapshot.hasData ? snapshot.data : LoopMode.all);
+      final next = (idx + 1) % order.length;
+      final icons = <LoopMode, Icon>{
+        LoopMode.off: Icon(Icons.repeat, color: Colors.grey),
+        LoopMode.one: Icon(Icons.repeat_one),
+        LoopMode.all: Icon(Icons.repeat),
+      };
+
+      return IconButton(
+        icon: icons[order[idx]],
+        iconSize: 35,
+        onPressed: () async {
+          await AudioService.customAction(
+            'set-loopmode',
+            order[next].toString(),
+          );
+        },
+      );
     },
   );
 

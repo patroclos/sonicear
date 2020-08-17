@@ -76,11 +76,17 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   StreamSubscription<PlaybackEvent> _eventSub;
   StreamSubscription<SequenceState> _sequenceSub;
 
+  Future<void> _setLoopMode(LoopMode mode) async {
+    await _player.setLoopMode(mode);
+    print('Set LoopMode to $mode');
+    AudioServiceBackground.sendCustomEvent({'name': 'loopmode-changed', 'mode': mode.toString()});
+  }
+
   @override
   Future<dynamic> onCustomAction(String name, arguments) async {
     switch (name) {
       case 'set-loopmode':
-        print(arguments);
+        await _setLoopMode(LoopMode.values.firstWhere((lm) => lm.toString() == arguments));
         break;
       default:
         throw Exception('Unknown custom audio service action: $name');
@@ -121,7 +127,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
     );
 
     await _player.load(_audioSource);
-    _player.setLoopMode(LoopMode.off);
+    _setLoopMode(LoopMode.all);
   }
 
   Future _setState({

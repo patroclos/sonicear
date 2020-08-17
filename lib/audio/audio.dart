@@ -2,30 +2,42 @@ export 'music_background_task.dart';
 export 'playable_song.dart';
 export 'playback_utils.dart';
 
-// subsonic_song -> [db, playable_media]
-// db -> playable_media
-// db -> file -> playable_media
+import 'dart:async';
 
-import 'package:bloc/bloc.dart';
+import 'package:audio_service/audio_service.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:rxdart/rxdart.dart';
 
-class SongState {
-  String uuid;
-  String subsonicId;
-}
+class AudioServiceLoopMode {
+  static BehaviorSubject<LoopMode> _controller;
 
-class SongBloc extends Bloc<Map<String, dynamic>, SongState> {
-  SongBloc(SongState initialState) : super(initialState);
+  static LoopMode get loopMode => _controller?.value;
 
-  @override
-  Stream<SongState> mapEventToState(Map<String, dynamic> event) {
-    switch(event['cmd']) {
-      case 'download':
-        break;
-      case 'evict':
-        break;
-    }
+  static StreamSubscription _subscription;
 
-    throw StateError('not implemented');
+  static Stream<LoopMode> get loopModeStream {
+    if (_controller == null) connect();
+
+    return _controller.stream;
   }
 
+  static void connect() {
+    if (_controller != null) disconnect();
+
+    _controller = BehaviorSubject<LoopMode>();
+    _subscription = AudioService.customEventStream
+        .where((event) => event['name'] == 'loopmode-changed')
+        .map((event) => event['mode'])
+        .map(
+          (mode) => LoopMode.values.firstWhere((lm) => lm.toString() == mode),
+        )
+        .listen(_controller.add);
+  }
+
+  static void disconnect() {
+    _controller.close();
+    _subscription.cancel();
+    _subscription = null;
+    _controller = null;
+  }
 }
