@@ -74,6 +74,24 @@ class AppDb {
         ADD active TINYINT NOT NULL CHECK (active IN (0,1)) DEFAULT 0
       ''');
     },
+
+    (txn) async {
+      await txn.execute('''
+        CREATE TABLE cached_songs (
+          id CHARACTER(36) PRIMARY KEY NOT NULL,
+          songId CHARACTER(16),
+          serverId CHARACTER(36),
+          bitrate INT,
+          songFile TEXT NOT NULL,
+          thumbFile TEXT NOT NULL,
+          
+          CONSTRAINT fk_song
+            FOREIGN KEY (songId, serverId)
+            REFERENCES songs(id, serverId)
+            ON DELETE SET NULL
+        )
+      '''
+      );
     }
   ];
 
