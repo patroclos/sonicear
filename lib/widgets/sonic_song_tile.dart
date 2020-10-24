@@ -32,13 +32,10 @@ class SonicSongTile extends StatelessWidget {
         onLongPress: onLongPress,
         child: Row(
           children: <Widget>[
-            Expanded(
-              flex: 1,
-              child: SonicCover(
-                song.coverId,
-                size: 35,
-                child: Text(song.title),
-              ),
+            SonicCover(
+              song.coverId,
+              size: 60,
+              child: Text(song.title),
             ),
             SizedBox(
               width: 12,

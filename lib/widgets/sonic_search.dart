@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:sonicear/audio/audio.dart';
 import 'package:sonicear/db/dao/sqflite_song_dao.dart';
 import 'package:sonicear/usecases/mediaitem_from_song.dart';
+import 'package:sonicear/widgets/song_context_sheet.dart';
 import 'package:sonicear/widgets/sonic_song_tile.dart';
 
 class SonicSearch extends StatefulWidget {
@@ -95,6 +96,13 @@ class _SonicSearchState extends State<SonicSearch> {
                   final mediaItem = OnlineMediaItemFromSong(context.read());
                   playSong(song, mediaItem);
                 },
+                trailing: IconButton(
+                  icon: Icon(Icons.more_vert),
+                  onPressed: () async {
+                    Scaffold.of(context).showBottomSheet((context) => SongContextSheet(song));
+                  },
+                ),
+                  /*
                 trailing: PopupMenuButton<String>(
                   itemBuilder: (context) =>
                       ['Play Next', 'Play Last'].map((v) =>
@@ -112,6 +120,7 @@ class _SonicSearchState extends State<SonicSearch> {
                     }
                   },
                 ),
+                */
               );
             },
           ),

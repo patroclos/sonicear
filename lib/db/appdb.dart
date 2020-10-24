@@ -83,7 +83,6 @@ class AppDb {
           serverId CHARACTER(36),
           bitrate INT,
           songFile TEXT NOT NULL,
-          thumbFile TEXT NOT NULL,
           
           CONSTRAINT fk_song
             FOREIGN KEY (songId, serverId)
@@ -92,6 +91,22 @@ class AppDb {
         )
       '''
       );
+
+      /*
+      '''
+      CREATE TABLE song_download_tasks (
+        taskId CHARACTER(36) PRIMARY KEY NOT NULL,
+        songId CHARACTER(16),
+        serverId CHARACTER(36),
+        status INT,
+
+        CONSTRAINT fk_song
+          FOREIGN KEY (songId, serverId)
+          REFERENCES songs(id, serverId)
+          ON DELETE CASCADE
+      )
+      ''';
+       */
     }
   ];
 
