@@ -6,8 +6,10 @@ import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:sonicear/audio/audio.dart';
 import 'package:sonicear/audio/playback_utils.dart';
+import 'package:sonicear/usecases/extensions.dart';
 import 'package:sonicear/widgets/app_playback_state.dart';
 import 'package:sonicear/widgets/queue_management_screen.dart';
+import 'package:sonicear/widgets/song_context_sheet.dart';
 import 'package:sonicear/widgets/sonic_cover.dart';
 
 class SonicPlayback extends StatefulWidget {
@@ -39,9 +41,22 @@ class _SonicPlaybackState extends State<SonicPlayback> {
           ),
         ),
         actions: [
-          PopupMenuButton(
-            itemBuilder: (context) => [],
-          )
+          StreamBuilder<MediaItem>(
+              stream: AudioService.currentMediaItemStream,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return Container();
+
+                return IconButton(
+                  icon: Icon(Icons.more_vert),
+                  onPressed: () {
+                    Scaffold.of(context).showBottomSheet(
+                      (context) => SongContextSheet(
+                        snapshot.data.extractDbSong(),
+                      ),
+                    );
+                  },
+                );
+              })
         ],
         leading: IconButton(
           icon: Icon(Icons.keyboard_arrow_down),
@@ -65,13 +80,7 @@ class _SonicPlaybackState extends State<SonicPlayback> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
                     if (mediaItem?.extras?.containsKey(kCoverId) ?? false)
-                      Padding(
-                        padding: const EdgeInsets.only(
-                            bottom: 32, left: 20, right: 20, top: 20),
-                        child: SonicCover(mediaItem?.extras[kCoverId],
-                            size:
-                                MediaQuery.of(context).size.width / 4 * 3 / 2),
-                      ),
+                      _cover,
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,6 +114,24 @@ class _SonicPlaybackState extends State<SonicPlayback> {
       ),
     );
   }
+
+  Widget get _cover => StreamBuilder<MediaItem>(
+    stream: AudioService.currentMediaItemStream,
+    builder: (context, snapshot) {
+      return Padding(
+            padding: const EdgeInsets.only(
+              bottom: 32,
+              left: 20,
+              right: 20,
+              top: 20,
+            ),
+            child: SonicCover(
+              snapshot.hasData ? snapshot.data.extras[kCoverId] : null,
+              size: MediaQuery.of(context).size.shortestSide / 4 * 3,
+            ),
+          );
+    }
+  );
 
   Widget _playbackControlRow(bool playing) => Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -145,7 +172,8 @@ class _SonicPlaybackState extends State<SonicPlayback> {
         LoopMode.one,
         LoopMode.off,
       ];
-      final idx = order.indexOf(snapshot.hasData ? snapshot.data : LoopMode.all);
+      final idx =
+          order.indexOf(snapshot.hasData ? snapshot.data : LoopMode.all);
       final next = (idx + 1) % order.length;
       final icons = <LoopMode, Icon>{
         LoopMode.off: Icon(Icons.repeat, color: Colors.grey),

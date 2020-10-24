@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:sonicear/audio/audio.dart';
 import 'package:sonicear/audio/playback_utils.dart';
 import 'package:sonicear/db/appdb.dart';
+import 'package:sonicear/db/offline_cache.dart';
 import 'package:sonicear/db/repository.dart';
 import 'package:sonicear/subsonic/context.dart';
 import 'package:sonicear/subsonic/subsonic.dart';
@@ -19,32 +20,24 @@ import 'package:sonicear/usecases/extensions.dart';
 
 import 'package:flutter_downloader/flutter_downloader.dart';
 
+final repoPromise = AppDb.instance.database.then(createSqfliteRepository);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FlutterDownloader.initialize(
     debug: true,
   );
+  final repo = await repoPromise;
+  OfflineCache.init(repo.offlineCache);
   AudioServiceLoopMode.connect();
 
   runApp(SonicEarApp());
 }
 
-/*
-final devMemoryServer = SubsonicContext(
-  serverId: '--dev-memory-server--',
-  endpoint: Uri(
-      scheme: 'http', host: '192.168.2.106', port: 8080, path: '/airsonic/'),
-  name: 'Development Server',
-  user: 'app',
-  pass: 'sonicear',
-);
- */
-
 class SonicEarApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    final repoPromise = AppDb.instance.database.then(createSqfliteRepository);
 
     return MultiProvider(
       providers: [
@@ -97,6 +90,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
   int _selectedNav = 0;
 
   final areas = <Widget>[
+    // TODO: make this a widget
     Builder(builder: (context) {
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -112,7 +106,6 @@ class _MainAppScreenState extends State<MainAppScreen> {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => SettingsScreen()),
                   );
-                  // TODO: open settings page for configuring servers, etc
                 },
               ),
             ],
@@ -150,9 +143,13 @@ class _MainAppScreenState extends State<MainAppScreen> {
                         songs,
                         onTap: (song) {
                           playSong(
-                              song, OnlineMediaItemFromSong(context.read()));
+                            song,
+                            OnlineMediaItemFromSong(context.read()),
+                          );
+                          /*
                           Navigator.of(context).push(MaterialPageRoute(
                               builder: (context) => SonicPlayback()));
+                           */
                         },
                       ),
                     ),
@@ -161,24 +158,6 @@ class _MainAppScreenState extends State<MainAppScreen> {
               );
             },
           ),
-          /*
-          FlatButton(
-            child: Text('Albums'),
-            onPressed: () async {
-              final ctx = context.read<SubsonicContext>();
-              // TODO: how do we do paging?
-              final albums = await sub_req.GetAlbumList(
-                      type: 'alphabeticalByArtist', size: 200)
-                  .run(ctx);
-
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => SonicAlbumList(albums.data),
-                ),
-              );
-            },
-          ),
-          */
         ],
       );
     }),

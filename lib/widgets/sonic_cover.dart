@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -32,9 +33,9 @@ class _SonicCoverState extends State<SonicCover> {
     this._imageBytesPromise = widget.coverId != null
         ? GetCoverArt(
             widget.coverId,
-            size: (widget.size * 2).round(),
+            size: (widget.size).round(),
           ).run(context.read()).then((data) => data.data)
-        : Future.error('no coverid given');
+        : Completer<Uint8List>().future;
   }
 
   @override
@@ -45,8 +46,9 @@ class _SonicCoverState extends State<SonicCover> {
         ImageProvider image = snapshot.hasData
             ? MemoryImage(snapshot.data)
             : AssetImage('assets/blank_cover.png');
-        return AspectRatio(
-          aspectRatio: 1,
+        return SizedBox(
+          width: widget.size,
+          height: widget.size,
           child: _buildImage(image),
         );
       },
@@ -54,8 +56,6 @@ class _SonicCoverState extends State<SonicCover> {
   }
 
   Widget _buildImage(ImageProvider provider) => Container(
-        width: widget.size,
-        height: widget.size,
         decoration: BoxDecoration(
           image: DecorationImage(image: provider, fit: BoxFit.cover),
           shape: <CoverDisplayType, BoxShape>{
@@ -64,10 +64,9 @@ class _SonicCoverState extends State<SonicCover> {
           }[widget.displayType],
           boxShadow: [
             BoxShadow(
-              color: Colors.white.withOpacity(0.3),
-              spreadRadius: widget.size / 20,
-              blurRadius: widget.size / 8,
-              offset: Offset(0, 3).scale(widget.size / 100, widget.size / 100),
+              color: Colors.white.withOpacity(0.1),
+              spreadRadius: widget.size / 30,
+              blurRadius: widget.size / 16,
             )
           ],
         ),
