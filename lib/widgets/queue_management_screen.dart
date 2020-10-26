@@ -1,6 +1,5 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:rxdart/rxdart.dart';
 import 'package:sonicear/db/dao/sqflite_song_dao.dart';
 import 'package:sonicear/widgets/sonic_song_tile.dart';
 import 'package:sonicear/usecases/extensions.dart';

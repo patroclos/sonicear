@@ -257,10 +257,13 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   }
    */
 
+  // TODO: use audio_session for this stuff?
+  /*
   @override
   Future<void> onAudioBecomingNoisy() async {
     onPause();
   }
+   */
 
   void playPause() {
     if (AudioServiceBackground.state.playing)
