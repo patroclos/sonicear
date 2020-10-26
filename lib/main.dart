@@ -5,9 +5,9 @@ import 'package:provider/provider.dart';
 import 'package:sonicear/audio/audio.dart';
 import 'package:sonicear/audio/playback_utils.dart';
 import 'package:sonicear/db/appdb.dart';
-import 'package:sonicear/db/offline_cache.dart';
 import 'package:sonicear/db/repository.dart';
 import 'package:sonicear/provider/loopmode_provider.dart';
+import 'package:sonicear/provider/offline_cache.dart';
 import 'package:sonicear/provider/subsonic_context_provider.dart';
 import 'package:sonicear/subsonic/context.dart';
 import 'package:sonicear/subsonic/subsonic.dart';
@@ -29,8 +29,6 @@ void main() async {
   await FlutterDownloader.initialize(
     debug: true,
   );
-  final repo = await repoPromise;
-  OfflineCache.init(repo.offlineCache);
 
   runApp(SonicEarApp());
 }
@@ -64,10 +62,16 @@ class SonicEarApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (context) => createContextProvider()),
         ProxyProvider<SubsonicContextProvider, SubsonicContext>(
-            update: (ctx, a, b) => a.context),
+          update: (ctx, a, b) => a.context,
+        ),
         ChangeNotifierProvider(create: (_) => LoopModeProvider()),
         ProxyProvider<LoopModeProvider, LoopMode>(
-            update: (_, lmp, __) => lmp.mode),
+          update: (_, lmp, __) => lmp.mode,
+        ),
+        ChangeNotifierProxyProvider<Repository, OfflineCache>(
+          create: (_) => OfflineCache(),
+          update: (_, Repository r, not) => not..setDao(r.offlineCache),
+        )
       ],
       child: MaterialApp(
         title: 'Sonic Ear',
