@@ -11,21 +11,7 @@ import 'package:sonicear/db/dao/sqflite_song_dao.dart';
 import 'package:sonicear/subsonic/context.dart';
 import 'package:sonicear/usecases/song_cache_file_location.dart';
 
-/*
-enum CachingStage {
-  None,
-  Downloading,
-  Cached,
-  Error
-}
-
-class CachedSongState {
-  final SongRef song;
-  final CachingStage stage;
-
-  CachedSongState(this.song, this.stage);
-}
- */
+// TODO: move to db
 class CachedSong {
   final String songId;
   final String serverId;
@@ -42,7 +28,7 @@ class OfflineCache with ChangeNotifier {
   StreamSubscription _sub;
 
   final _songTasks = <String, DbSong>{};
-  
+
   OfflineCacheDao _dao;
 
   OfflineCache() {
@@ -54,10 +40,21 @@ class OfflineCache with ChangeNotifier {
 
   void setDao(OfflineCacheDao dao) {
     _dao = dao;
+
+    // TODO: seeed _songTasks w/ db entries x-ref w/ actual tasks
+  }
+
+  bool hasCachingTask(DbSong song) {
+    return _songTasks.values.any((s) => s.serverId == song.serverId && s.id == song.id);
+  }
+
+  Future<CachedSong> getCachedSong(DbSong song) {
+    throw Error();
   }
 
   Future makeAvailableOffline(DbSong song, SubsonicContext context) async {
-    final uri = context.buildRequestUri('download', params: {'id': song.id}).toString();
+    final uri =
+        context.buildRequestUri('download', params: {'id': song.id}).toString();
 
     final fileName = await SongCacheFileLocation()(song);
     await fileName.parent.create(recursive: true);
@@ -67,15 +64,25 @@ class OfflineCache with ChangeNotifier {
       savedDir: fileName.parent.path,
       showNotification: true,
       openFileFromNotification: true,
-      fileName: path.basename(fileName.path)
+      fileName: path.basename(fileName.path),
     );
 
     await _registerTask(taskId, song);
   }
 
-  Future _registerTask(String taskId, DbSong song) {
+  Future evict(DbSong song) {
+    // TODO: remove associated tasks, remove associated files, remove db entries
+  }
+
+  Future<void> _registerTask(String taskId, DbSong song) async {
     _songTasks[taskId] = song;
-    print(_songTasks);
+    await _dao.trackTask(
+      songId: song.id,
+      serverId: song.serverId,
+      taskId: taskId,
+    );
+
+    notifyListeners();
   }
 
   void _handleMessage(dynamic message) async {
@@ -83,30 +90,30 @@ class OfflineCache with ChangeNotifier {
     final DownloadTaskStatus status = message[1];
     final int progress = message[2];
 
-    if(!_songTasks.containsKey(taskId))
-      return;
+    if (!_songTasks.containsKey(taskId)) return;
 
     final song = _songTasks[taskId];
     print('Song Progress \'${song.title}\': $progress $status');
 
-    if(status == DownloadTaskStatus.canceled || status == DownloadTaskStatus.failed) {
+    if (status == DownloadTaskStatus.canceled ||
+        status == DownloadTaskStatus.failed) {
+      await _dao.removeTaskOf(song.id, song.serverId);
       print('song ${song.title} failed downloading');
+      _songTasks.remove(taskId);
     }
 
-    if(status == DownloadTaskStatus.complete) {
+    if (status == DownloadTaskStatus.complete) {
       print('song ${song.title} completely downloaded');
 
-      // TODO: find the file location
       final loc = await SongCacheFileLocation()(song);
-      // TODO: defer dao action until we actually have a dao assigned
-      _dao.songCachedAt(songId: song.id, serverId: song.serverId, musicFile: loc);
+      _dao.songCachedAt(
+          songId: song.id, serverId: song.serverId, musicFile: loc);
+      _songTasks.remove(taskId);
     }
 
     notifyListeners();
     // print('Downloader RCV: tId=$taskId, status=$status, p=$progress');
   }
-
-  // Stream<CachedSongState> observeSong(DbSong song) {}
 
   void dispose() {
     super.dispose();
