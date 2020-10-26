@@ -1,7 +1,7 @@
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:sonicear/audio/playback_utils.dart';
 import 'package:sonicear/db/dao/sqflite_song_dao.dart';
+import 'package:sonicear/provider/offline_cache.dart';
 
 class SongContextSheet extends StatelessWidget {
   final DbSong song;
@@ -47,7 +47,8 @@ class SongContextSheet extends StatelessWidget {
               child: Text('Download'),
               onPressed: () {
                 print('download $song');
-                downloadSong(song, context.read());
+                context.read<OfflineCache>().makeAvailableOffline(song, context.read());
+                // downloadSong(song, context.read());
                 Navigator.of(context).pop();
               },
             )

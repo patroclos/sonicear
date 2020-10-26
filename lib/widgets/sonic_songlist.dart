@@ -1,9 +1,8 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sonicear/audio/audio.dart';
 import 'package:sonicear/db/dao/sqflite_song_dao.dart';
-import 'package:sonicear/subsonic/subsonic.dart';
+import 'package:sonicear/provider/offline_cache.dart';
 import 'package:sonicear/usecases/mediaitem_from_song.dart';
 import 'package:sonicear/widgets/sonic_song_tile.dart';
 
@@ -53,7 +52,8 @@ class SonicSonglist extends StatelessWidget {
       onSelected: (item) async {
         switch (item) {
           case 'download':
-            await downloadSong(song, context.read());
+            await context.read<OfflineCache>().makeAvailableOffline(song, context.read());
+            // await downloadSong(song, context.read());
             break;
           case 'play-last':
             AudioService.addQueueItem(

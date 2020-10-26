@@ -2,17 +2,14 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:ui';
+import 'package:path/path.dart' as path;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:sonicear/db/dao/offline_cache_dao.dart';
 import 'package:sonicear/db/dao/sqflite_song_dao.dart';
+import 'package:sonicear/subsonic/context.dart';
 import 'package:sonicear/usecases/song_cache_file_location.dart';
-
-class SongRef {
-  final String id, serverId;
-
-  SongRef(this.id, this.serverId);
-}
 
 /*
 enum CachingStage {
@@ -38,13 +35,7 @@ class CachedSong {
   CachedSong(this.songId, this.serverId, this.songFile, this.thumbFile);
 }
 
-class OfflineCache {
-  static OfflineCache _instance;
-
-  static OfflineCache get instance {
-    return _instance;
-  }
-
+class OfflineCache with ChangeNotifier {
   static const _portName = 'offlinecache_downloader_send_port';
 
   final ReceivePort _port = ReceivePort();
@@ -52,17 +43,37 @@ class OfflineCache {
 
   final _songTasks = <String, DbSong>{};
   
-  final OfflineCacheDao dao;
+  OfflineCacheDao _dao;
 
-  OfflineCache._(this.dao) {
+  OfflineCache() {
     _sub = _port.listen(_handleMessage);
 
     IsolateNameServer.registerPortWithName(_port.sendPort, _portName);
     FlutterDownloader.registerCallback(_downloadCallback);
   }
 
-  Future registerTask(String taskId, DbSong song) {
-    // TODO: persist association?
+  void setDao(OfflineCacheDao dao) {
+    _dao = dao;
+  }
+
+  Future makeAvailableOffline(DbSong song, SubsonicContext context) async {
+    final uri = context.buildRequestUri('download', params: {'id': song.id}).toString();
+
+    final fileName = await SongCacheFileLocation()(song);
+    await fileName.parent.create(recursive: true);
+
+    final taskId = await FlutterDownloader.enqueue(
+      url: uri,
+      savedDir: fileName.parent.path,
+      showNotification: true,
+      openFileFromNotification: true,
+      fileName: path.basename(fileName.path)
+    );
+
+    await _registerTask(taskId, song);
+  }
+
+  Future _registerTask(String taskId, DbSong song) {
     _songTasks[taskId] = song;
     print(_songTasks);
   }
@@ -87,22 +98,21 @@ class OfflineCache {
 
       // TODO: find the file location
       final loc = await SongCacheFileLocation()(song);
-      dao.songCachedAt(songId: song.id, serverId: song.serverId, musicFile: loc);
+      // TODO: defer dao action until we actually have a dao assigned
+      _dao.songCachedAt(songId: song.id, serverId: song.serverId, musicFile: loc);
     }
+
+    notifyListeners();
     // print('Downloader RCV: tId=$taskId, status=$status, p=$progress');
   }
 
   // Stream<CachedSongState> observeSong(DbSong song) {}
 
   void dispose() {
+    super.dispose();
     _port.close();
     _sub.cancel();
     IsolateNameServer.removePortNameMapping(_portName);
-    if (_instance == this) _instance = null;
-  }
-
-  static void init(OfflineCacheDao dao) {
-    if (_instance == null) _instance = OfflineCache._(dao);
   }
 
   static void _downloadCallback(
