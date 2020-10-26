@@ -6,6 +6,7 @@ import 'package:sonicear/audio/playback_utils.dart';
 import 'package:sonicear/db/appdb.dart';
 import 'package:sonicear/db/offline_cache.dart';
 import 'package:sonicear/db/repository.dart';
+import 'package:sonicear/provider/subsonic_context_provider.dart';
 import 'package:sonicear/subsonic/context.dart';
 import 'package:sonicear/subsonic/subsonic.dart';
 import 'package:sonicear/subsonic/requests/requests.dart' as sub_req;
@@ -13,7 +14,6 @@ import 'package:sonicear/usecases/mediaitem_from_song.dart';
 import 'package:sonicear/usecases/search_music.dart';
 import 'package:sonicear/widgets/playback_line.dart';
 import 'package:sonicear/widgets/settings_screen.dart';
-import 'package:sonicear/widgets/sonic_playback.dart';
 import 'package:sonicear/widgets/sonic_search.dart';
 import 'package:sonicear/widgets/sonic_songlist.dart';
 import 'package:sonicear/usecases/extensions.dart';
@@ -34,6 +34,25 @@ void main() async {
   runApp(SonicEarApp());
 }
 
+SubsonicContextProvider createContextProvider(){
+  final provider = SubsonicContextProvider();
+
+  repoPromise.then((repo) async {
+    final dao = repo.servers;
+    final active = await dao.getActiveServer();
+    if(active != null)
+      provider.updateContext(active);
+
+    final servers = await dao.listServers();
+    if(servers.isEmpty) return;
+
+    await dao.setActiveServer(servers.first);
+    provider.updateContext(servers.first);
+  });
+
+  return provider;
+}
+
 class SonicEarApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
@@ -44,19 +63,10 @@ class SonicEarApp extends StatelessWidget {
         FutureProvider(
           create: (_) => repoPromise,
         ),
-        FutureProvider(
-          create: (context) async {
-            final dao = (await repoPromise).servers;
-            final active = await dao.getActiveServer();
-            if (active != null) return active;
-
-            final servers = await dao.listServers();
-            if (servers.isEmpty) return null;
-
-            await dao.setActiveServer(servers.first);
-            return servers.first;
-          },
-        ),
+        ChangeNotifierProvider(create: (context) => createContextProvider()),
+        ProxyProvider<SubsonicContextProvider, SubsonicContext>(
+          update: (ctx, a, b) => a.context
+        )
       ],
       child: MaterialApp(
         title: 'Sonic Ear',
@@ -173,9 +183,9 @@ class _MainAppScreenState extends State<MainAppScreen> {
         currentIndex: _selectedNav,
         items: [
           BottomNavigationBarItem(
-              icon: Icon(Icons.library_music), title: Text('Library')),
+              icon: Icon(Icons.library_music), label: 'Library'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.search), title: Text('Search'))
+              icon: Icon(Icons.search), label: 'Search')
         ],
         onTap: (selected) {
           setState(() {

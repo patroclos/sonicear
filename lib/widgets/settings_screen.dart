@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sonicear/db/repository.dart';
+import 'package:sonicear/provider/subsonic_context_provider.dart';
 import 'package:sonicear/subsonic/context.dart';
 import 'package:sonicear/widgets/create_server_screen.dart';
 
@@ -82,6 +83,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               onTap: () async {
                 await _repo.servers.setActiveServer(server);
+                Provider.of<SubsonicContextProvider>(context, listen: false).updateContext(server);
                 setState(() {
                   _activeId = server.serverId;
                 });
@@ -105,6 +107,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     assert(_repo != null);
     assert(server != null);
     await _repo.servers.delete(server);
+
+    if(_activeId == server.serverId) {
+      Provider.of<SubsonicContextProvider>(context, listen: false).updateContext(null);
+    }
     setState(() {
       _servers..remove(server);
     });

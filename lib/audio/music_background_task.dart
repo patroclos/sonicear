@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
@@ -59,14 +58,12 @@ class MusicBackgroundTask extends BackgroundAudioTask {
 
   int _queueIndex = -1;
   bool _playing;
-  bool _interrupted = false;
+  // bool _interrupted = false;
   AudioProcessingState _skipState;
 
   final _queue = <MediaItem>[];
 
   bool get hasNext => _queueIndex + 1 < _queue.length;
-
-  //bool get hasNext => _queue.isNotEmpty;
 
   bool get hasPrev => _queueIndex > 0;
 
@@ -94,7 +91,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   }
 
   @override
-  void onStart(Map<String, dynamic> params) async {
+  Future<void> onStart(Map<String, dynamic> params) async {
     _playerStateSub = _player.playerStateStream
         .where((event) =>
             event.playing && event.processingState == ProcessingState.completed)
@@ -161,7 +158,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   Future<void> onSkipToPrevious() => _skip(-1);
 
   @override
-  void onSkipToQueueItem(String mediaId) {
+  Future<void> onSkipToQueueItem(String mediaId) async {
     final idx = _queue.indexWhere((item) => item.id == mediaId);
     _skip(idx - _queueIndex);
   }
@@ -185,7 +182,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   }
 
   @override
-  void onPlay() {
+  Future<void> onPlay() async {
     if (_skipState == null) {
       _playing = true;
       _player.play();
@@ -193,7 +190,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   }
 
   @override
-  void onPause() {
+  Future<void> onPause() async {
     if (_skipState == null) {
       _playing = false;
       _player.pause();
@@ -201,12 +198,12 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   }
 
   @override
-  void onSeekTo(Duration position) {
+  Future<void> onSeekTo(Duration position) async{
     _player.seek(position);
   }
 
   @override
-  void onClick(MediaButton button) {
+  Future<void> onClick(MediaButton button)async {
     playPause();
   }
 
@@ -222,6 +219,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
     await super.onStop();
   }
 
+  /*
   @override
   void onAudioFocusLost(AudioInterruption interruption) {
     if (_playing) _interrupted = true;
@@ -251,9 +249,10 @@ class MusicBackgroundTask extends BackgroundAudioTask {
     }
     _interrupted = false;
   }
+   */
 
   @override
-  void onAudioBecomingNoisy() {
+  Future<void> onAudioBecomingNoisy() async {
     onPause();
   }
 
@@ -265,7 +264,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   }
 
   @override
-  void onPlayMediaItem(MediaItem mediaItem) async {
+  Future<void> onPlayMediaItem(MediaItem mediaItem) async {
     final insertIdx = _queueIndex == -1 ? 0 : (_queueIndex + 1);
     _queue.insert(insertIdx, mediaItem);
     await _audioSource.insert(
@@ -279,7 +278,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   }
 
   @override
-  void onAddQueueItem(MediaItem mediaItem) async {
+  Future<void> onAddQueueItem(MediaItem mediaItem) async {
     _queue.add(mediaItem);
     await _audioSource.add(
       AudioSource.uri(
@@ -289,7 +288,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   }
 
   @override
-  void onAddQueueItemAt(MediaItem mediaItem, int index) async {
+  Future<void> onAddQueueItemAt(MediaItem mediaItem, int index) async {
     _queue.insert(index + _queueIndex, mediaItem);
     await _audioSource.insert(
       index + _queueIndex,
