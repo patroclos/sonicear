@@ -39,7 +39,10 @@ SubsonicContextProvider createContextProvider() {
   repoPromise.then((repo) async {
     final dao = repo.servers;
     final active = await dao.getActiveServer();
-    if (active != null) provider.updateContext(active);
+    if (active != null) {
+      provider.updateContext(active);
+      return;
+    }
 
     final servers = await dao.listServers();
     if (servers.isEmpty) return;
