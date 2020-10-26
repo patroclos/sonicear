@@ -208,6 +208,12 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   }
 
   @override
+  Future<void> onTaskRemoved() async {
+    await onStop();
+    return super.onTaskRemoved();
+  }
+
+  @override
   Future<void> onStop() async {
     await _player.stop();
     await _player.dispose();
