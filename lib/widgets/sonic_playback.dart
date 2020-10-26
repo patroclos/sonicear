@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:provider/provider.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
@@ -19,7 +20,7 @@ class SonicPlayback extends StatefulWidget {
 
 class _SonicPlaybackState extends State<SonicPlayback> {
   final BehaviorSubject<double> _dragPositionSubject =
-      BehaviorSubject.seeded(null);
+  BehaviorSubject.seeded(null);
 
   @override
   void dispose() {
@@ -33,12 +34,17 @@ class _SonicPlaybackState extends State<SonicPlayback> {
       appBar: AppBar(
         title: StreamBuilder<MediaItem>(
           stream: AudioService.currentMediaItemStream,
-          builder: (context, snapshot) => Center(
-            child: Text(
-              !snapshot.hasData ? 'Not playing Anything' : snapshot.data.title,
-              style: Theme.of(context).textTheme.subtitle2,
-            ),
-          ),
+          builder: (context, snapshot) =>
+              Center(
+                child: Text(
+                  !snapshot.hasData ? 'Not playing Anything' : snapshot.data
+                      .title,
+                  style: Theme
+                      .of(context)
+                      .textTheme
+                      .subtitle2,
+                ),
+              ),
         ),
         actions: [
           StreamBuilder<MediaItem>(
@@ -50,9 +56,10 @@ class _SonicPlaybackState extends State<SonicPlayback> {
                   icon: Icon(Icons.more_vert),
                   onPressed: () {
                     Scaffold.of(context).showBottomSheet(
-                      (context) => SongContextSheet(
-                        snapshot.data.extractDbSong(),
-                      ),
+                          (context) =>
+                          SongContextSheet(
+                            snapshot.data.extractDbSong(),
+                          ),
                     );
                   },
                 );
@@ -87,11 +94,17 @@ class _SonicPlaybackState extends State<SonicPlayback> {
                       children: <Widget>[
                         Text(
                           mediaItem?.title ?? '',
-                          style: Theme.of(context).textTheme.headline5,
+                          style: Theme
+                              .of(context)
+                              .textTheme
+                              .headline5,
                         ),
                         Text(
                           mediaItem?.artist ?? '',
-                          style: Theme.of(context).textTheme.headline6,
+                          style: Theme
+                              .of(context)
+                              .textTheme
+                              .headline6,
                         ),
                       ],
                     ),
@@ -115,25 +128,30 @@ class _SonicPlaybackState extends State<SonicPlayback> {
     );
   }
 
-  Widget get _cover => StreamBuilder<MediaItem>(
-    stream: AudioService.currentMediaItemStream,
-    builder: (context, snapshot) {
-      return Padding(
-            padding: const EdgeInsets.only(
-              bottom: 32,
-              left: 20,
-              right: 20,
-              top: 20,
-            ),
-            child: SonicCover(
-              snapshot.hasData ? snapshot.data.extras[kCoverId] : null,
-              size: MediaQuery.of(context).size.shortestSide / 4 * 3,
-            ),
-          );
-    }
-  );
+  Widget get _cover =>
+      StreamBuilder<MediaItem>(
+          stream: AudioService.currentMediaItemStream,
+          builder: (context, snapshot) {
+            return Padding(
+              padding: const EdgeInsets.only(
+                bottom: 32,
+                left: 20,
+                right: 20,
+                top: 20,
+              ),
+              child: SonicCover(
+                snapshot.hasData ? snapshot.data.extras[kCoverId] : null,
+                size: MediaQuery
+                    .of(context)
+                    .size
+                    .shortestSide / 4 * 3,
+              ),
+            );
+          }
+      );
 
-  Widget _playbackControlRow(bool playing) => Row(
+  Widget _playbackControlRow(bool playing) =>
+      Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           IconButton(
@@ -164,16 +182,16 @@ class _SonicPlaybackState extends State<SonicPlayback> {
     },
   );
 
-  Widget _repeatButton = StreamBuilder<LoopMode>(
-    stream: AudioServiceLoopMode.loopModeStream,
-    builder: (context, snapshot) {
-      final order = [
+  Widget _repeatButton = Builder(
+    builder: (context) {
+      const order = [
         LoopMode.all,
         LoopMode.one,
         LoopMode.off,
       ];
-      final idx =
-          order.indexOf(snapshot.hasData ? snapshot.data : LoopMode.all);
+      final current = context.watch<LoopMode>();
+
+      final idx = order.indexOf(current != null ? current : LoopMode.all);
       final next = (idx + 1) % order.length;
       final icons = <LoopMode, Icon>{
         LoopMode.off: Icon(Icons.repeat, color: Colors.grey),
@@ -194,7 +212,8 @@ class _SonicPlaybackState extends State<SonicPlayback> {
     },
   );
 
-  Widget _playPauseButton(bool playing) => IconButton(
+  Widget _playPauseButton(bool playing) =>
+      IconButton(
         icon: Icon(playing ? Icons.pause : Icons.play_arrow),
         iconSize: 50,
         onPressed: () async {
@@ -221,7 +240,9 @@ class _SonicPlaybackState extends State<SonicPlayback> {
               SliderTheme(
                 data: SliderThemeData(
                   thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
-                  thumbColor: Theme.of(context).primaryColor,
+                  thumbColor: Theme
+                      .of(context)
+                      .primaryColor,
                   trackHeight: 2,
                 ),
                 child: Slider(
@@ -260,5 +281,6 @@ class _SonicPlaybackState extends State<SonicPlayback> {
   }
 
   String _buildTimestamp(Duration d) =>
-      '${d.inMinutes.floor()}:${(d.inSeconds % 60).floor().toString().padLeft(2, '0')}';
+      '${d.inMinutes.floor()}:${(d.inSeconds % 60).floor().toString().padLeft(
+          2, '0')}';
 }
