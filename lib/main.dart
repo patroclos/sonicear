@@ -15,7 +15,7 @@ import 'package:sonicear/subsonic/requests/requests.dart' as sub_req;
 import 'package:sonicear/usecases/mediaitem_from_song.dart';
 import 'package:sonicear/usecases/search_music.dart';
 import 'package:sonicear/widgets/playback_line.dart';
-import 'package:sonicear/widgets/settings_screen.dart';
+import 'package:sonicear/widgets/screens/settings_screen.dart';
 import 'package:sonicear/widgets/sonic_search.dart';
 import 'package:sonicear/widgets/sonic_songlist.dart';
 import 'package:sonicear/usecases/extensions.dart';

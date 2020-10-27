@@ -1,8 +1,8 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:sonicear/widgets/app_playback_state.dart';
-import 'package:sonicear/widgets/sonic_playback.dart';
+import 'app_playback_state.dart';
+import 'screens/sonic_playback_screen.dart';
 
 class PlaybackLine extends StatelessWidget {
   @override
@@ -38,8 +38,11 @@ class PlaybackLine extends StatelessWidget {
                     IconButton(
                       icon: Icon(Icons.keyboard_arrow_up),
                       onPressed: () {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => SonicPlayback()));
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => SonicPlaybackScreen(),
+                          ),
+                        );
                       },
                     ),
                     Expanded(
@@ -47,7 +50,12 @@ class PlaybackLine extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(currentSong.title, maxLines: 1, softWrap: false, overflow: TextOverflow.ellipsis,),
+                          Text(
+                            currentSong.title,
+                            maxLines: 1,
+                            softWrap: false,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           Text(currentSong.artist),
                         ],
                       ),

@@ -13,12 +13,12 @@ import 'package:sonicear/widgets/queue_management_screen.dart';
 import 'package:sonicear/widgets/song_context_sheet.dart';
 import 'package:sonicear/widgets/sonic_cover.dart';
 
-class SonicPlayback extends StatefulWidget {
+class SonicPlaybackScreen extends StatefulWidget {
   @override
-  _SonicPlaybackState createState() => _SonicPlaybackState();
+  _SonicPlaybackScreenState createState() => _SonicPlaybackScreenState();
 }
 
-class _SonicPlaybackState extends State<SonicPlayback> {
+class _SonicPlaybackScreenState extends State<SonicPlaybackScreen> {
   final BehaviorSubject<double> _dragPositionSubject =
   BehaviorSubject.seeded(null);
 

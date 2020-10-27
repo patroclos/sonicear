@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sonicear/db/repository.dart';
 import 'package:sonicear/provider/subsonic_context_provider.dart';
 import 'package:sonicear/subsonic/context.dart';
-import 'package:sonicear/widgets/create_server_screen.dart';
+import 'create_server_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   @override
