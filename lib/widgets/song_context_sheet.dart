@@ -1,7 +1,6 @@
-import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:sonicear/db/dao/sqflite_song_dao.dart';
-import 'package:sonicear/provider/offline_cache.dart';
+import 'package:sonicear/widgets/song_offline_switch.dart';
 
 class SongContextSheet extends StatelessWidget {
   final DbSong song;
@@ -34,30 +33,7 @@ class SongContextSheet extends StatelessWidget {
             Text('${song.artist} on ${song.album}',
                 style: Theme.of(context).textTheme.headline6),
 
-            // TODO: hook this up to a Provider based download manager?
-            // TODO: add more info, if we've just queued it or its in progress, like a label saying (x'th in queue, downloading, xx% downloaded, open folder)
-            SwitchListTile(
-              value: context.select<OfflineCache, bool>((cache) => cache.hasCachingTask(song))/* false*/,
-              onChanged: (sliderValue) async {
-                if(sliderValue) {
-                  await context.read<OfflineCache>().makeAvailableOffline(song, context.read());
-                } else {
-                  await context.read<OfflineCache>().evict(song);
-                }
-
-                print('available offline: $sliderValue');
-              },
-              title: Text('Available Offline'),
-            ),
-            OutlineButton(
-              child: Text('Download'),
-              onPressed: () {
-                print('download $song');
-                context.read<OfflineCache>().makeAvailableOffline(song, context.read());
-                // downloadSong(song, context.read());
-                Navigator.of(context).pop();
-              },
-            )
+            SongOfflineSwitch(song: song),
           ],
         ),
       );
