@@ -162,7 +162,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
                         onTap: (song) {
                           playSong(
                             song,
-                            OnlineMediaItemFromSong(context.read()),
+                            CachedOrOnlineMediaItemFromSong(context.read(), context.read()),
                           );
                           /*
                           Navigator.of(context).push(MaterialPageRoute(

@@ -21,11 +21,7 @@ class SearchMusic {
 
     final dbSongs = results.songs.map((song) => song.toDbSong()).toList();
 
-    final sw = Stopwatch()..start();
     await _repo.songs.ensureSongsExist(dbSongs);
-    sw.stop();
-    print('EnsureSongs ${sw.elapsed}');
-    // await Future.wait(dbSongs.map((song) =>_repo.songs.ensureSongsExist(song)));
 
     // TODO: also handle non-song search results in the future
     return dbSongs;

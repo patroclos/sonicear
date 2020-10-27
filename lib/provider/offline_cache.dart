@@ -12,14 +12,6 @@ import 'package:sonicear/subsonic/context.dart';
 import 'package:sonicear/usecases/song_cache_file_location.dart';
 
 // TODO: move to db
-class CachedSong {
-  final String songId;
-  final String serverId;
-  final File songFile;
-  final File thumbFile;
-
-  CachedSong(this.songId, this.serverId, this.songFile, this.thumbFile);
-}
 
 class OfflineCache with ChangeNotifier {
   static const _portName = 'offlinecache_downloader_send_port';
@@ -45,11 +37,12 @@ class OfflineCache with ChangeNotifier {
   }
 
   bool hasCachingTask(DbSong song) {
-    return _songTasks.values.any((s) => s.serverId == song.serverId && s.id == song.id);
+    return _songTasks.values
+        .any((s) => s.serverId == song.serverId && s.id == song.id);
   }
 
   Future<CachedSong> getCachedSong(DbSong song) {
-    throw Error();
+    return _dao.findCached(song.id, song.serverId);
   }
 
   Future makeAvailableOffline(DbSong song, SubsonicContext context) async {
@@ -62,16 +55,20 @@ class OfflineCache with ChangeNotifier {
     final taskId = await FlutterDownloader.enqueue(
       url: uri,
       savedDir: fileName.parent.path,
-      showNotification: true,
-      openFileFromNotification: true,
       fileName: path.basename(fileName.path),
+      showNotification: false,
     );
 
     await _registerTask(taskId, song);
   }
 
-  Future evict(DbSong song) {
-    // TODO: remove associated tasks, remove associated files, remove db entries
+  Future evict(DbSong song) async {
+    final cached = await _dao.findCached(song.id, song.serverId);
+    if(cached == null)
+      return;
+
+    await cached.songFile.delete();
+    await _dao.evicted(cached.songFile);
   }
 
   Future<void> _registerTask(String taskId, DbSong song) async {
@@ -107,7 +104,10 @@ class OfflineCache with ChangeNotifier {
 
       final loc = await SongCacheFileLocation()(song);
       _dao.songCachedAt(
-          songId: song.id, serverId: song.serverId, musicFile: loc);
+        songId: song.id,
+        serverId: song.serverId,
+        musicFile: loc,
+      );
       _songTasks.remove(taskId);
     }
 
