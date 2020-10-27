@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:rxdart/rxdart.dart';
+import 'package:rxdart/rxdart.dart' show BehaviorSubject, Rx;
 import 'package:sonicear/audio/audio.dart';
 import 'package:sonicear/audio/playback_utils.dart';
 import 'package:sonicear/usecases/extensions.dart';
@@ -20,7 +20,7 @@ class SonicPlaybackScreen extends StatefulWidget {
 
 class _SonicPlaybackScreenState extends State<SonicPlaybackScreen> {
   final BehaviorSubject<double> _dragPositionSubject =
-  BehaviorSubject.seeded(null);
+      BehaviorSubject.seeded(null);
 
   @override
   void dispose() {
@@ -34,17 +34,12 @@ class _SonicPlaybackScreenState extends State<SonicPlaybackScreen> {
       appBar: AppBar(
         title: StreamBuilder<MediaItem>(
           stream: AudioService.currentMediaItemStream,
-          builder: (context, snapshot) =>
-              Center(
-                child: Text(
-                  !snapshot.hasData ? 'Not playing Anything' : snapshot.data
-                      .title,
-                  style: Theme
-                      .of(context)
-                      .textTheme
-                      .subtitle2,
-                ),
-              ),
+          builder: (context, snapshot) => Center(
+            child: Text(
+              snapshot.hasData ? snapshot.data.title : 'Not playing Anything',
+              style: Theme.of(context).textTheme.subtitle2,
+            ),
+          ),
         ),
         actions: [
           StreamBuilder<MediaItem>(
@@ -56,10 +51,9 @@ class _SonicPlaybackScreenState extends State<SonicPlaybackScreen> {
                   icon: Icon(Icons.more_vert),
                   onPressed: () {
                     Scaffold.of(context).showBottomSheet(
-                          (context) =>
-                          SongContextSheet(
-                            snapshot.data.extractDbSong(),
-                          ),
+                      (context) => SongContextSheet(
+                        snapshot.data.extractDbSong(),
+                      ),
                     );
                   },
                 );
@@ -72,86 +66,91 @@ class _SonicPlaybackScreenState extends State<SonicPlaybackScreen> {
           },
         ),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: StreamBuilder<AppPlaybackState>(
-              stream: AppPlaybackState.stateStream,
-              builder: (context, snapshot) {
-                final screenState = snapshot.data;
-                final mediaItem = screenState?.currentSong;
-                final state = screenState?.playbackState;
-                final playing = state?.playing ?? false;
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    if (mediaItem?.extras?.containsKey(kCoverId) ?? false)
-                      _cover,
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          mediaItem?.title ?? '',
-                          style: Theme
-                              .of(context)
-                              .textTheme
-                              .headline5,
-                        ),
-                        Text(
-                          mediaItem?.artist ?? '',
-                          style: Theme
-                              .of(context)
-                              .textTheme
-                              .headline6,
-                        ),
-                      ],
-                    ),
-                    if (mediaItem != null) positionScrubber(mediaItem, state),
-                    if (AudioService.running) _playbackControlRow(playing),
-                    IconButton(
-                      icon: Icon(Icons.queue_music),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => QueueManagementScreen(),
-                          ),
-                        );
-                      },
-                    )
-                  ],
-                );
-              }),
-        ),
-      ),
+      body: _body,
     );
   }
 
-  Widget get _cover =>
-      StreamBuilder<MediaItem>(
-          stream: AudioService.currentMediaItemStream,
-          builder: (context, snapshot) {
-            return Padding(
-              padding: const EdgeInsets.only(
-                bottom: 32,
-                left: 20,
-                right: 20,
-                top: 20,
+  Widget get _body => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _cover,
+              _titles,
+              _scrubber,
+              StreamBuilder<bool>(
+                stream: AudioService.playbackStateStream
+                    .map((state) => state.playing),
+                builder: (context, snapshot) => _playbackControlRow(snapshot.data)
               ),
-              child: SonicCover(
-                snapshot.hasData ? snapshot.data.extras[kCoverId] : null,
-                size: MediaQuery
-                    .of(context)
-                    .size
-                    .shortestSide / 4 * 3,
-              ),
-            );
-          }
+              _queueButton,
+            ],
+          ),
+        ),
       );
 
-  Widget _playbackControlRow(bool playing) =>
-      Row(
+  Widget get _titles => StreamBuilder(
+        stream: AudioService.currentMediaItemStream,
+        builder: (context, snapshot) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              snapshot.data?.title ?? '',
+              style: Theme.of(context).textTheme.headline5,
+            ),
+            Text(
+              snapshot.data?.artist ?? '',
+              style: Theme.of(context).textTheme.headline6,
+            ),
+          ],
+        ),
+      );
+
+  Widget get _scrubber => RepaintBoundary(
+        child: StreamBuilder<AppPlaybackState>(
+          stream: AppPlaybackState.stateStream,
+          builder: (context, snapshot) => (snapshot.data?.currentSong != null)
+              ? positionScrubber(
+                  snapshot.data.currentSong,
+                  snapshot.data.playbackState,
+                )
+              : const SizedBox.shrink(),
+        ),
+      );
+
+  Widget get _queueButton => IconButton(
+        icon: Icon(Icons.queue_music),
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => QueueManagementScreen(),
+            ),
+          );
+        },
+      );
+
+  Widget get _cover => StreamBuilder<MediaItem>(
+      stream: AudioService.currentMediaItemStream,
+      builder: (context, snapshot) {
+        return Padding(
+          padding: const EdgeInsets.only(
+            bottom: 32,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SonicCover(
+            snapshot.data?.extras?.containsKey(kCoverId) ?? false
+                ? snapshot.data?.extras[kCoverId]
+                : null,
+            size: MediaQuery.of(context).size.shortestSide / 4 * 3,
+          ),
+        );
+      });
+
+  Widget _playbackControlRow(bool playing) => Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           IconButton(
@@ -212,8 +211,7 @@ class _SonicPlaybackScreenState extends State<SonicPlaybackScreen> {
     },
   );
 
-  Widget _playPauseButton(bool playing) =>
-      IconButton(
+  Widget _playPauseButton(bool playing) => IconButton(
         icon: Icon(playing ? Icons.pause : Icons.play_arrow),
         iconSize: 50,
         onPressed: () async {
@@ -227,8 +225,11 @@ class _SonicPlaybackScreenState extends State<SonicPlaybackScreen> {
   Widget positionScrubber(MediaItem mediaItem, PlaybackState state) {
     double seekPos;
     return StreamBuilder(
-      stream: Rx.combineLatest2(_dragPositionSubject.stream,
-          Stream.periodic(Duration(milliseconds: 200)), (a, _) => a),
+      stream: Rx.combineLatest2(
+        _dragPositionSubject.stream,
+        Stream.periodic(Duration(milliseconds: 200)),
+        (a, _) => a,
+      ),
       builder: (context, snapshot) {
         final position =
             snapshot.data ?? state.currentPosition.inMilliseconds.toDouble();
@@ -240,9 +241,7 @@ class _SonicPlaybackScreenState extends State<SonicPlaybackScreen> {
               SliderTheme(
                 data: SliderThemeData(
                   thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
-                  thumbColor: Theme
-                      .of(context)
-                      .primaryColor,
+                  thumbColor: Theme.of(context).primaryColor,
                   trackHeight: 2,
                 ),
                 child: Slider(
@@ -281,6 +280,5 @@ class _SonicPlaybackScreenState extends State<SonicPlaybackScreen> {
   }
 
   String _buildTimestamp(Duration d) =>
-      '${d.inMinutes.floor()}:${(d.inSeconds % 60).floor().toString().padLeft(
-          2, '0')}';
+      '${d.inMinutes.floor()}:${(d.inSeconds % 60).floor().toString().padLeft(2, '0')}';
 }
