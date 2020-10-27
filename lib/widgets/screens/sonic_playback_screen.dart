@@ -9,7 +9,7 @@ import 'package:sonicear/audio/audio.dart';
 import 'package:sonicear/audio/playback_utils.dart';
 import 'package:sonicear/usecases/extensions.dart';
 import 'package:sonicear/widgets/app_playback_state.dart';
-import 'package:sonicear/widgets/queue_management_screen.dart';
+import 'queue_management_screen.dart';
 import 'package:sonicear/widgets/song_context_sheet.dart';
 import 'package:sonicear/widgets/sonic_cover.dart';
 
