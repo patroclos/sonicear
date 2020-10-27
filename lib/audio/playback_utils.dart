@@ -10,7 +10,7 @@ const String kStreamUrl = 'stream-url';
 Future<bool> playSong(DbSong song, MediaItemFromSong song2media) async {
   if (!AudioService.running && !await startSonicearAudioTask()) return false;
 
-  await AudioService.playMediaItem(song2media(song));
+  await AudioService.playMediaItem(await song2media(song));
   return true;
 }
 

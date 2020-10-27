@@ -4,7 +4,15 @@ import 'package:meta/meta.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 
-class CachedSong {}
+class CachedSong {
+  final String songId;
+  final String serverId;
+  final File songFile;
+
+  // final File thumbFile;
+
+  CachedSong(this.songId, this.serverId, this.songFile);
+}
 
 abstract class OfflineCacheDao {
   Future<void> songCachedAt({
@@ -12,6 +20,10 @@ abstract class OfflineCacheDao {
     @required String serverId,
     @required File musicFile,
   });
+
+  Future<CachedSong> findCached(String songId, String serverId);
+
+  Future<void> evicted(File file);
 
   Future<void> removeTaskOf(String songId, String serverId);
 
@@ -47,12 +59,29 @@ class SqfliteOfflineCacheDao implements OfflineCacheDao {
     ]);
   }
 
+  Future<CachedSong> findCached(String songId, String serverId) async {
+    final rows = await _db.query(
+      CACHED_SONGS,
+      where: 'songId = ? AND serverId = ?',
+      whereArgs: [songId, serverId],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+
+    return CachedSong(rows[0]['songId'], rows[0]['serverId'], File(rows[0]['songFile']));
+  }
+
+  Future<void> evicted(File file) async {
+    await _db.delete(CACHED_SONGS, where: 'songFile = ?', whereArgs: [file.path]);
+  }
+
   Future<void> trackTask({
     @required String songId,
     @required String serverId,
     @required String taskId,
   }) async {
-    await _db.insert(DOWNLOAD_TASKS, {'songId': songId, 'serverId': serverId, 'taskId': taskId});
+    await _db.insert(DOWNLOAD_TASKS,
+        {'songId': songId, 'serverId': serverId, 'taskId': taskId});
   }
 
   Future<void> removeTaskOf(String songId, String serverId) async {

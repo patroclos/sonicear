@@ -93,7 +93,7 @@ class _SonicSearchState extends State<SonicSearch> {
               return SonicSongTile(
                 song,
                 onTap: () {
-                  final mediaItem = OnlineMediaItemFromSong(context.read());
+                  final mediaItem = CachedOrOnlineMediaItemFromSong(context.read(), context.read());
                   playSong(song, mediaItem);
                 },
                 trailing: IconButton(
