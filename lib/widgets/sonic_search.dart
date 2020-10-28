@@ -18,7 +18,10 @@ class SonicSearch extends StatefulWidget {
 
 class _SonicSearchState extends State<SonicSearch> {
   final TextEditingController _queryCtrl = TextEditingController();
-  bool _searching = false;
+  final FocusNode _focus = FocusNode(
+    debugLabel: 'SearchField Focus',
+  );
+
   String _query = '';
 
   final items = <DbSong>[];
@@ -27,6 +30,7 @@ class _SonicSearchState extends State<SonicSearch> {
   void dispose() {
     super.dispose();
     _queryCtrl.dispose();
+    _focus.dispose();
   }
 
   Widget build(BuildContext context) {
@@ -41,7 +45,7 @@ class _SonicSearchState extends State<SonicSearch> {
         padding: const EdgeInsets.only(bottom: 8, left: 8),
         child: TextField(
           controller: _queryCtrl,
-          autofocus: _query.isEmpty,
+          focusNode: _focus,
           keyboardType: TextInputType.text,
           decoration: InputDecoration(
             hintText: 'Search songs...',
@@ -61,27 +65,6 @@ class _SonicSearchState extends State<SonicSearch> {
         ),
       );
 
-  List<Widget> get _actions =>
-      _searching
-          ? <Widget>[
-        IconButton(
-          icon: Icon(Icons.clear),
-          onPressed: () {
-            if (_queryCtrl.text.isEmpty) {
-              Navigator.pop(context);
-              return;
-            }
-            _clearSearchQuery();
-          },
-        )
-      ]
-          : <Widget>[
-        IconButton(
-          icon: const Icon(Icons.search),
-          onPressed: _startSearch,
-        )
-      ];
-
   Widget get _resultList =>
       Expanded(
         child: Scrollbar(
@@ -93,12 +76,14 @@ class _SonicSearchState extends State<SonicSearch> {
               return SonicSongTile(
                 song,
                 onTap: () {
+                  _focus.unfocus();
                   final mediaItem = CachedOrOnlineMediaItemFromSong(context.read(), context.read());
                   playSong(song, mediaItem);
                 },
                 trailing: IconButton(
                   icon: Icon(Icons.more_vert),
                   onPressed: () async {
+                    _focus.unfocus();
                     Scaffold.of(context).showBottomSheet((context) => SongContextSheet(song));
                   },
                 ),
@@ -127,15 +112,6 @@ class _SonicSearchState extends State<SonicSearch> {
         ),
       );
 
-  void _startSearch() async {
-    ModalRoute.of(context)
-        .addLocalHistoryEntry(LocalHistoryEntry(onRemove: _stopSearching));
-
-    setState(() {
-      _searching = true;
-    });
-  }
-
   void updateSearchQuery(String newQuery) async {
     setState(() {
       _query = newQuery;
@@ -153,17 +129,4 @@ class _SonicSearchState extends State<SonicSearch> {
     });
   }
 
-  void _stopSearching() {
-    _clearSearchQuery();
-    setState(() {
-      _searching = false;
-    });
-  }
-
-  void _clearSearchQuery() {
-    setState(() {
-      _queryCtrl.clear();
-      updateSearchQuery('');
-    });
-  }
 }
