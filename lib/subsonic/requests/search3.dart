@@ -32,7 +32,7 @@ class Search3 extends BaseRequest<Search3Result> {
       ResponseStatus.ok,
       ctx.version,
       Search3Result(
-        (data['searchResult3']['song'] as List)
+        (data['searchResult3']['song'] as List ?? const [])
             .map((song) => Song.parse(song, serverId: ctx.serverId))
             .toList(),
       ),
