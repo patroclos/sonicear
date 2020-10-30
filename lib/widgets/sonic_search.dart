@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:sonicear/audio/audio.dart';
 import 'package:sonicear/db/dao/sqflite_song_dao.dart';
 import 'package:sonicear/subsonic/requests/requests.dart';
-import 'package:sonicear/usecases/mediaitem_from_song.dart';
 import 'package:sonicear/usecases/search_music.dart';
 import 'package:sonicear/widgets/song_context_sheet.dart';
 import 'package:sonicear/widgets/sonic_song_tile.dart';

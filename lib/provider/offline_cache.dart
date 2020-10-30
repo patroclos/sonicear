@@ -20,6 +20,7 @@ class OfflineCache with ChangeNotifier {
   StreamSubscription _sub;
 
   final _songTasks = <String, DbSong>{};
+  final _taskProgress = <String, int>{};
 
   OfflineCacheDao _dao;
 
@@ -41,8 +42,20 @@ class OfflineCache with ChangeNotifier {
         .any((s) => s.serverId == song.serverId && s.id == song.id);
   }
 
+  int getTaskProgress(DbSong song) {
+    assert(hasCachingTask(song));
+
+    final taskId = _songTasks.entries
+        .firstWhere((e) {
+          final s = e.value;
+          return s.serverId == song.serverId && s.id == song.id;
+        }).key;
+
+    return _taskProgress[taskId];
+  }
+
   Future<CachedSong> getCachedSong(DbSong song) {
-    return _dao.findCached(song.id, song.serverId);
+    return _dao.find(song.id, song.serverId);
   }
 
   Future makeAvailableOffline(DbSong song, SubsonicContext context) async {
@@ -63,17 +76,19 @@ class OfflineCache with ChangeNotifier {
   }
 
   Future evict(DbSong song) async {
-    final cached = await _dao.findCached(song.id, song.serverId);
+    final cached = await _dao.find(song.id, song.serverId);
     if(cached == null)
       return;
 
     await cached.songFile.delete();
-    await _dao.evicted(cached.songFile);
+    await _dao.evictFile(cached.songFile);
+    notifyListeners();
   }
 
   Future<void> _registerTask(String taskId, DbSong song) async {
     _songTasks[taskId] = song;
-    await _dao.trackTask(
+    _taskProgress[taskId] = 0;
+    await _dao.associateDownloadTask(
       songId: song.id,
       serverId: song.serverId,
       taskId: taskId,
@@ -91,10 +106,11 @@ class OfflineCache with ChangeNotifier {
 
     final song = _songTasks[taskId];
     print('Song Progress \'${song.title}\': $progress $status');
+    _taskProgress[taskId] = progress;
 
     if (status == DownloadTaskStatus.canceled ||
         status == DownloadTaskStatus.failed) {
-      await _dao.removeTaskOf(song.id, song.serverId);
+      await _dao.removeDownloadTaskOf(song.id, song.serverId);
       print('song ${song.title} failed downloading');
       _songTasks.remove(taskId);
     }
@@ -103,12 +119,13 @@ class OfflineCache with ChangeNotifier {
       print('song ${song.title} completely downloaded');
 
       final loc = await SongCacheFileLocation()(song);
-      _dao.songCachedAt(
+      _dao.associateFile(
         songId: song.id,
         serverId: song.serverId,
         musicFile: loc,
       );
       _songTasks.remove(taskId);
+      _taskProgress.remove(taskId);
     }
 
     notifyListeners();

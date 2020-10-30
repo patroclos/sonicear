@@ -14,6 +14,7 @@ import 'package:sonicear/subsonic/subsonic.dart';
 import 'package:sonicear/subsonic/requests/requests.dart' as sub_req;
 import 'package:sonicear/usecases/mediaitem_from_song.dart';
 import 'package:sonicear/usecases/search_music.dart';
+import 'package:sonicear/widgets/offline_gallery.dart';
 import 'package:sonicear/widgets/playback_line.dart';
 import 'package:sonicear/widgets/screens/settings_screen.dart';
 import 'package:sonicear/widgets/sonic_search.dart';
@@ -37,9 +38,10 @@ class SonicEarApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        FutureProvider(
-            create: (_) async =>
-                createSqfliteRepository(await AppDb.instance.database)),
+        FutureProvider<Repository>(
+          create: (_) async =>
+              createSqfliteRepository(await AppDb.instance.database),
+        ),
         ChangeNotifierProxyProvider<Repository, SubsonicContextProvider>(
             create: (_) => SubsonicContextProvider(),
             update: (_, repo, provider) {
@@ -121,46 +123,63 @@ class _MainAppScreenState extends State<MainAppScreen> {
               ),
             ],
           ),
-          FlatButton(
-            child: Text('Random Songs'),
-            onPressed: () async {
-              final ctx = context.read<SubsonicContext>();
-              final songs = (await sub_req.GetRandomSongs(size: 30).run(ctx))
-                  .data
-                  .map((song) => song.toDbSong())
-                  .toList();
+          Expanded(
+            child: Builder(builder: (context) {
+              final repo = context.watch<Repository>();
+              if(repo == null)
+                return CircularProgressIndicator();
+              return OfflineGallery(repo.songs, repo.offlineCache);
+            }),
+            flex: 3,
+          ),
+          Expanded(
+            flex: 8,
+            child: Column(
+              children: [
+                FlatButton(
+                  child: Text('Random Songs'),
+                  onPressed: () async {
+                    final ctx = context.read<SubsonicContext>();
+                    final songs =
+                        (await sub_req.GetRandomSongs(size: 30).run(ctx))
+                            .data
+                            .map((song) => song.toDbSong())
+                            .toList();
 
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => Scaffold(
-                    appBar: AppBar(
-                      title: Text('Random Songs'),
-                      actions: <Widget>[
-                        IconButton(
-                          icon: Icon(Icons.shuffle),
-                          onPressed: () {
-                            AudioService.updateQueue(
-                              songs
-                                  .map(OnlineMediaItemFromSong(ctx).call)
-                                  .toList(),
-                            );
-                          },
-                        )
-                      ],
-                    ),
-                    body: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: SonicSonglist(
-                        songs,
-                        onTap: (song) {
-                          playSong(song, context.read());
-                        },
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => Scaffold(
+                          appBar: AppBar(
+                            title: Text('Random Songs'),
+                            actions: <Widget>[
+                              IconButton(
+                                icon: Icon(Icons.shuffle),
+                                onPressed: () {
+                                  AudioService.updateQueue(
+                                    songs
+                                        .map(OnlineMediaItemFromSong(ctx).call)
+                                        .toList(),
+                                  );
+                                },
+                              )
+                            ],
+                          ),
+                          body: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: SonicSonglist(
+                              songs,
+                              onTap: (song) {
+                                playSong(song, context.read());
+                              },
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
-              );
-            },
+              ],
+            ),
           ),
         ],
       );

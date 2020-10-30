@@ -57,6 +57,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
 
   int _queueIndex = -1;
   bool _playing;
+
   // bool _interrupted = false;
   AudioProcessingState _skipState;
 
@@ -75,14 +76,16 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   Future<void> _setLoopMode(LoopMode mode) async {
     await _player.setLoopMode(mode);
     print('Set LoopMode to $mode');
-    AudioServiceBackground.sendCustomEvent({'name': 'loopmode-changed', 'mode': mode.toString()});
+    AudioServiceBackground.sendCustomEvent(
+        {'name': 'loopmode-changed', 'mode': mode.toString()});
   }
 
   @override
   Future<dynamic> onCustomAction(String name, arguments) async {
     switch (name) {
       case 'set-loopmode':
-        await _setLoopMode(LoopMode.values.firstWhere((lm) => lm.toString() == arguments));
+        await _setLoopMode(
+            LoopMode.values.firstWhere((lm) => lm.toString() == arguments));
         break;
       default:
         throw Exception('Unknown custom audio service action: $name');
@@ -101,12 +104,12 @@ class MusicBackgroundTask extends BackgroundAudioTask {
     );
 
     _sequenceSub = _player.sequenceStateStream.listen((state) {
-      if(state == null)
-        return;
+      if (state == null) return;
       if (_queueIndex != state.currentIndex) {
         _queueIndex = state.currentIndex;
-        if(mediaItem != null)
+        if (mediaItem != null) {
           AudioServiceBackground.setMediaItem(mediaItem);
+        }
       }
       AudioServiceBackground.setQueue(_queue.skip(_queueIndex + 1).toList());
     });
@@ -123,8 +126,10 @@ class MusicBackgroundTask extends BackgroundAudioTask {
       },
     );
 
-    await _player.load(_audioSource);
-    _setLoopMode(LoopMode.all);
+    // awaiting here causes a hang until the first item is added to _audioSource
+    /* await */
+    _player.load(_audioSource);
+    await _setLoopMode(LoopMode.all);
   }
 
   Future _setState({
@@ -165,9 +170,10 @@ class MusicBackgroundTask extends BackgroundAudioTask {
 
   Future<void> _skip(int offset) async {
     final newPos = _queueIndex + offset;
-    if (newPos < 0 || newPos >= _queue.length) return;
-    if (_playing == null)
-      _playing = true;
+    if (newPos < 0 || newPos >= _queue.length) {
+      return;
+    }
+    if (_playing == null) _playing = true;
 
     _skipState = offset > 0
         ? AudioProcessingState.skippingToNext
@@ -176,7 +182,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
     _skipState = null;
 
     if (_playing)
-      onPlay();
+      await onPlay();
     else
       _setState(processingState: AudioProcessingState.ready);
   }
@@ -198,12 +204,12 @@ class MusicBackgroundTask extends BackgroundAudioTask {
   }
 
   @override
-  Future<void> onSeekTo(Duration position) async{
+  Future<void> onSeekTo(Duration position) async {
     _player.seek(position);
   }
 
   @override
-  Future<void> onClick(MediaButton button)async {
+  Future<void> onClick(MediaButton button) async {
     playPause();
   }
 
@@ -283,7 +289,10 @@ class MusicBackgroundTask extends BackgroundAudioTask {
       ),
     );
 
-    onSkipToNext();
+    if (insertIdx == 0)
+      onPlay();
+    else
+      await onSkipToNext();
   }
 
   @override
@@ -314,8 +323,7 @@ class MusicBackgroundTask extends BackgroundAudioTask {
 
     final size = _audioSource.length;
     await _audioSource.addAll((queue.map(_sourceFromItem)).toList());
-    if(size > 0)
-      _audioSource.removeRange(0, size);
+    if (size > 0) _audioSource.removeRange(0, size);
   }
 
   AudioSource _sourceFromItem(MediaItem item) {
