@@ -19,7 +19,7 @@ jobs:
     - name: Install dependencies
       run: flutter pub get
     - name: Build Android APKs
-      run: flutter build apk --target-platform android-arm,android-arm64,android-x86 --split-per-abi
+      run: flutter build apk --target-platform android-arm,android-arm64 --split-per-abi
     - name: Upload Android APKs
       uses: actions/upload-artifact@master
       with:
