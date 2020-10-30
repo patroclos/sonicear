@@ -163,6 +163,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.1.4"
+  infinite_scroll_pagination:
+    dependency: "direct main"
+    description:
+      name: infinite_scroll_pagination
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.2.1"
   intl:
     dependency: transitive
     description:
@@ -308,6 +315,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.99"
+  sliver_tools:
+    dependency: transitive
+    description:
+      name: sliver_tools
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.8"
   source_span:
     dependency: transitive
     description:
@@ -421,5 +435,5 @@ packages:
     source: hosted
     version: "0.1.2"
 sdks:
-  dart: ">=2.10.0-110 <=2.11.0-213.1.beta"
-  flutter: ">=1.16.0 <2.0.0"
+  dart: "2.11.0-213.1.beta"
+  flutter: ">=1.22.0 <2.0.0"

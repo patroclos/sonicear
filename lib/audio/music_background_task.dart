@@ -39,8 +39,7 @@ MediaControl _stopCtrl = MediaControl(
 
 class MusicBackgroundTask extends BackgroundAudioTask {
   AudioPlayer _player = AudioPlayer();
-  ConcatenatingAudioSource _audioSource =
-      ConcatenatingAudioSource(children: []);
+  final _audioSource = ConcatenatingAudioSource(children: []);
 
   List<MediaControl> get controls => (_playing ?? false)
       ? [
@@ -106,7 +105,8 @@ class MusicBackgroundTask extends BackgroundAudioTask {
         return;
       if (_queueIndex != state.currentIndex) {
         _queueIndex = state.currentIndex;
-        AudioServiceBackground.setMediaItem(mediaItem);
+        if(mediaItem != null)
+          AudioServiceBackground.setMediaItem(mediaItem);
       }
       AudioServiceBackground.setQueue(_queue.skip(_queueIndex + 1).toList());
     });

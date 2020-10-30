@@ -82,7 +82,9 @@ class _SonicPlaybackScreenState extends State<SonicPlaybackScreen> {
               StreamBuilder<bool>(
                 stream: AudioService.playbackStateStream
                     .map((state) => state.playing),
-                builder: (context, snapshot) => _playbackControlRow(snapshot.data)
+                builder: (context, snapshot) => snapshot.hasData
+                    ? _playbackControlRow(snapshot.data)
+                    : SizedBox.shrink(),
               ),
               _queueButton,
             ],

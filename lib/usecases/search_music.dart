@@ -10,14 +10,27 @@ class SearchMusic {
   final SubsonicContext _subsonic;
   final Repository _repo;
 
-  SearchMusic._(this._subsonic, this._repo);
+  SearchMusic(this._subsonic, this._repo);
 
   factory SearchMusic.of(BuildContext context) {
-    return SearchMusic._(context.watch(), context.watch());
+    return SearchMusic(context.watch(), context.watch());
   }
 
-  Future<Iterable<DbSong>> call(String query) async {
-    final results = (await Search3(query).run(_subsonic)).data;
+  Future<Iterable<DbSong>> call(
+    String query, {
+    CountOffset artist,
+    CountOffset album,
+    CountOffset song,
+    String musicFolderId,
+  }) async {
+    final results = (await Search3(
+      query,
+      artist: artist,
+      album: album,
+      song: song,
+      musicFolderId: musicFolderId,
+    ).run(_subsonic))
+        .data;
 
     final dbSongs = results.songs.map((song) => song.toDbSong()).toList();
 

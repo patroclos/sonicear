@@ -1,16 +1,20 @@
-import 'package:audio_service/audio_service.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:provider/provider.dart';
 import 'package:sonicear/audio/audio.dart';
 import 'package:sonicear/db/dao/sqflite_song_dao.dart';
+import 'package:sonicear/subsonic/requests/requests.dart';
 import 'package:sonicear/usecases/mediaitem_from_song.dart';
+import 'package:sonicear/usecases/search_music.dart';
 import 'package:sonicear/widgets/song_context_sheet.dart';
 import 'package:sonicear/widgets/sonic_song_tile.dart';
 
 class SonicSearch extends StatefulWidget {
-  final Future<Iterable<DbSong>> Function(String query) search;
+  // final Future<Iterable<DbSong>> Function(String query) searchSongs;
+  final int batchSize;
 
-  SonicSearch(this.search);
+  SonicSearch({this.batchSize = 20});
 
   @override
   _SonicSearchState createState() => _SonicSearchState();
@@ -24,7 +28,34 @@ class _SonicSearchState extends State<SonicSearch> {
 
   String _query = '';
 
-  final items = <DbSong>[];
+  final _pagingController = PagingController<int, DbSong>(firstPageKey: 0);
+
+  @override
+  void initState() {
+    super.initState();
+
+    _pagingController.addPageRequestListener((pageOffset) async {
+      try {
+        final result = (await context.read<SearchMusic>().call(
+                  this._query,
+                  song:
+                      CountOffset(count: widget.batchSize, offset: pageOffset),
+                ))
+            .toList();
+
+        final isLast = result.length < widget.batchSize;
+        if (isLast)
+          _pagingController.appendLastPage(result);
+        else {
+          final nextKey = pageOffset + result.length;
+          _pagingController.appendPage(result, nextKey);
+        }
+      } catch (e, trace) {
+        print('$e\n\n$trace');
+        _pagingController.error = e;
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -36,12 +67,11 @@ class _SonicSearchState extends State<SonicSearch> {
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.max,
-      children: <Widget>[_searchField, _resultList],
+      children: <Widget>[_searchField, if(context.watch<SearchMusic>() != null) _resultList],
     );
   }
 
-  Widget get _searchField =>
-      Padding(
+  Widget get _searchField => Padding(
         padding: const EdgeInsets.only(bottom: 8, left: 8),
         child: TextField(
           controller: _queryCtrl,
@@ -54,7 +84,10 @@ class _SonicSearchState extends State<SonicSearch> {
             icon: Icon(Icons.search),
             suffixIcon: IconButton(
               icon: Icon(Icons.clear),
-              onPressed: () => _queryCtrl.clear(),
+              onPressed: () {
+                _queryCtrl.clear();
+                updateSearchQuery('');
+              },
             ),
             filled: true,
             fillColor: Colors.white30,
@@ -65,50 +98,30 @@ class _SonicSearchState extends State<SonicSearch> {
         ),
       );
 
-  Widget get _resultList =>
-      Expanded(
+  Widget get _resultList => Expanded(
         child: Scrollbar(
-          child: ListView.builder(
-            itemCount: items.length,
-            itemBuilder: (context, i) {
-              final song = items[i];
-
-              return SonicSongTile(
-                song,
-                onTap: () {
-                  _focus.unfocus();
-                  final mediaItem = CachedOrOnlineMediaItemFromSong(context.read(), context.read());
-                  playSong(song, mediaItem);
-                },
-                trailing: IconButton(
-                  icon: Icon(Icons.more_vert),
-                  onPressed: () async {
+          child: PagedListView<int, DbSong>(
+              pagingController: _pagingController,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              builderDelegate: PagedChildBuilderDelegate<DbSong>(
+                itemBuilder: (context, song, index) => SonicSongTile(
+                  song,
+                  onTap: () {
                     _focus.unfocus();
-                    Scaffold.of(context).showBottomSheet((context) => SongContextSheet(song));
+                    final resolveMediaItem = CachedOrOnlineMediaItemFromSong(
+                        context.read(), context.read());
+                    playSong(song, resolveMediaItem);
                   },
+                  trailing: IconButton(
+                    icon: Icon(Icons.more_vert),
+                    onPressed: () async {
+                      _focus.unfocus();
+                      Scaffold.of(context)
+                          .showBottomSheet((context) => SongContextSheet(song));
+                    },
+                  ),
                 ),
-                  /*
-                trailing: PopupMenuButton<String>(
-                  itemBuilder: (context) =>
-                      ['Play Next', 'Play Last'].map((v) =>
-                          PopupMenuItem(value: v, child: Text(v),)).toList(),
-                  onSelected: (choice) {
-                    final mediaItem = OnlineMediaItemFromSong(context.read())(
-                        song);
-                    switch (choice) {
-                      case 'Play Next':
-                        AudioService.addQueueItemAt(mediaItem, 1);
-                        break;
-                      case 'Play Last':
-                        AudioService.addQueueItem(mediaItem);
-                        break;
-                    }
-                  },
-                ),
-                */
-              );
-            },
-          ),
+              )),
         ),
       );
 
@@ -117,16 +130,6 @@ class _SonicSearchState extends State<SonicSearch> {
       _query = newQuery;
     });
 
-    final q = _query;
-    final results = await widget.search(q);
-
-    if(q != _query)
-      return;
-
-    setState(() {
-      items.clear();
-      items.addAll(results);
-    });
+    _pagingController.refresh();
   }
-
 }
