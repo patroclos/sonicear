@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:sonicear/subsonic/subsonic.dart';
 import 'package:http/http.dart' as http;
 
@@ -9,19 +10,52 @@ class Search3Result {
   Search3Result(this.songs);
 }
 
+class CountOffset {
+  final int count, offset;
+
+  const CountOffset({
+    @required this.count,
+    this.offset = 0,
+  });
+}
+
 class Search3 extends BaseRequest<Search3Result> {
   @override
   String get sinceVersion => '1.8.0';
 
   final String query;
 
-  Search3(this.query);
+  final CountOffset artist, album, song;
+  final String musicFolderId;
+
+  Search3(this.query, {this.artist, this.album, this.song, this.musicFolderId});
 
   @override
   Future<SubsonicResponse<Search3Result>> run(SubsonicContext ctx) async {
     final response = await http.get(ctx.buildRequestUri(
       'search3',
-      params: {'query': query},
+      params: {'query': query}
+        ..addAll(
+          artist != null
+              ? {
+                  'artistCount': '${artist.count}',
+                  'artistOffset': '${artist.offset}'
+                }
+              : {},
+        )
+        ..addAll(
+          album != null
+              ? {
+                  'albumCount': '${album.count}',
+                  'albumOffset': '${album.offset}'
+                }
+              : {},
+        )
+        ..addAll(
+          song != null
+              ? {'songCount': '${song.count}', 'songOffset': '${song.offset}'}
+              : {},
+        ),
     ));
 
     final data = jsonDecode(response.body)['subsonic-response'];

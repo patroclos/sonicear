@@ -15,6 +15,15 @@ class QueueManagementScreen extends StatelessWidget {
           icon: Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
         ),
+
+        actions: [
+          IconButton(
+            icon: Icon(Icons.clear_all),
+            onPressed: () async {
+              await AudioService.updateQueue([]);
+            },
+          )
+        ],
       ),
       body: SafeArea(
         child: Padding(

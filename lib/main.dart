@@ -74,7 +74,11 @@ class SonicEarApp extends StatelessWidget {
         ChangeNotifierProxyProvider<Repository, OfflineCache>(
           create: (_) => OfflineCache(),
           update: (_, Repository r, not) => not..setDao(r.offlineCache),
-        )
+        ),
+        ProxyProvider2<SubsonicContext, Repository, SearchMusic>(
+          update: (_, server, repo, oldValue) =>
+              server != null && repo != null ? SearchMusic(server, repo) : null,
+        ),
       ],
       child: MaterialApp(
         title: 'Sonic Ear',
@@ -162,7 +166,10 @@ class _MainAppScreenState extends State<MainAppScreen> {
                         onTap: (song) {
                           playSong(
                             song,
-                            CachedOrOnlineMediaItemFromSong(context.read(), context.read()),
+                            CachedOrOnlineMediaItemFromSong(
+                              context.read(),
+                              context.read(),
+                            ),
                           );
                           /*
                           Navigator.of(context).push(MaterialPageRoute(
@@ -180,7 +187,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
       );
     }),
     Builder(
-      builder: (context) => SonicSearch(SearchMusic.of(context)),
+      builder: (context) => SonicSearch(),
     )
   ];
 
