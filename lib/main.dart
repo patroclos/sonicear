@@ -37,15 +37,15 @@ class SonicEarApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        FutureProvider(create: (_) async => createSqfliteRepository(await AppDb.instance.database)),
+        FutureProvider(
+            create: (_) async =>
+                createSqfliteRepository(await AppDb.instance.database)),
         ChangeNotifierProxyProvider<Repository, SubsonicContextProvider>(
-          create: (_) => SubsonicContextProvider(),
-          update: (_, repo, provider) {
-            if(repo != null)
-              provider.initialize(repo.servers);
-            return provider;
-          }
-        ),
+            create: (_) => SubsonicContextProvider(),
+            update: (_, repo, provider) {
+              if (repo != null) provider.initialize(repo.servers);
+              return provider;
+            }),
         ProxyProvider<SubsonicContextProvider, SubsonicContext>(
           update: (ctx, a, b) => a.context,
         ),
@@ -58,9 +58,16 @@ class SonicEarApp extends StatelessWidget {
           update: (_, Repository r, not) => not..setDao(r.offlineCache),
         ),
         ProxyProvider2<SubsonicContext, Repository, SearchMusic>(
-          update: (_, server, repo, oldValue) =>
-              server != null && repo != null ? SearchMusic(server, repo) : null,
+          update: (_, server, repo, oldValue) => server != null && repo != null
+              ? SearchMusic(server, repo)
+              : oldValue,
         ),
+        ProxyProvider2<SubsonicContext, OfflineCache, MediaItemFromSong>(
+          update: (_, server, cache, oldValue) =>
+              server != null && cache != null
+                  ? CachedOrOnlineMediaItemFromSong(cache, server)
+                  : oldValue,
+        )
       ],
       child: MaterialApp(
         title: 'Sonic Ear',
@@ -146,17 +153,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
                       child: SonicSonglist(
                         songs,
                         onTap: (song) {
-                          playSong(
-                            song,
-                            CachedOrOnlineMediaItemFromSong(
-                              context.read(),
-                              context.read(),
-                            ),
-                          );
-                          /*
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) => SonicPlayback()));
-                           */
+                          playSong(song, context.read());
                         },
                       ),
                     ),
@@ -180,8 +177,13 @@ class _MainAppScreenState extends State<MainAppScreen> {
         currentIndex: _selectedNav,
         items: [
           BottomNavigationBarItem(
-              icon: Icon(Icons.library_music), label: 'Library'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search')
+            label: 'Library',
+            icon: Icon(Icons.library_music),
+          ),
+          BottomNavigationBarItem(
+            label: 'Search',
+            icon: Icon(Icons.search),
+          )
         ],
         onTap: (selected) {
           setState(() {

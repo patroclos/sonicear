@@ -108,9 +108,7 @@ class _SonicSearchState extends State<SonicSearch> {
                   song,
                   onTap: () {
                     _focus.unfocus();
-                    final resolveMediaItem = CachedOrOnlineMediaItemFromSong(
-                        context.read(), context.read());
-                    playSong(song, resolveMediaItem);
+                    playSong(song, context.read());
                   },
                   trailing: IconButton(
                     icon: Icon(Icons.more_vert),
