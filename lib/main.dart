@@ -37,10 +37,14 @@ class SonicEarApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        FutureProvider(create: (_) => AppDb.instance.database),
+        FutureProvider(create: (_) async => createSqfliteRepository(await AppDb.instance.database)),
         ChangeNotifierProxyProvider<Repository, SubsonicContextProvider>(
           create: (_) => SubsonicContextProvider(),
-          update: (_, repo, provider) => provider..initialize(repo.servers)
+          update: (_, repo, provider) {
+            if(repo != null)
+              provider.initialize(repo.servers);
+            return provider;
+          }
         ),
         ProxyProvider<SubsonicContextProvider, SubsonicContext>(
           update: (ctx, a, b) => a.context,
