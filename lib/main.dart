@@ -22,8 +22,6 @@ import 'package:sonicear/usecases/extensions.dart';
 
 import 'package:flutter_downloader/flutter_downloader.dart';
 
-final repoPromise = AppDb.instance.database.then(createSqfliteRepository);
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FlutterDownloader.initialize(
@@ -33,37 +31,17 @@ void main() async {
   runApp(SonicEarApp());
 }
 
-SubsonicContextProvider createContextProvider() {
-  final provider = SubsonicContextProvider();
-
-  repoPromise.then((repo) async {
-    final dao = repo.servers;
-    final active = await dao.getActiveServer();
-    if (active != null) {
-      provider.updateContext(active);
-      return;
-    }
-
-    final servers = await dao.listServers();
-    if (servers.isEmpty) return;
-
-    await dao.setActiveServer(servers.first);
-    provider.updateContext(servers.first);
-  });
-
-  return provider;
-}
-
 class SonicEarApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        FutureProvider(
-          create: (_) => repoPromise,
+        FutureProvider(create: (_) => AppDb.instance.database),
+        ChangeNotifierProxyProvider<Repository, SubsonicContextProvider>(
+          create: (_) => SubsonicContextProvider(),
+          update: (_, repo, provider) => provider..initialize(repo.servers)
         ),
-        ChangeNotifierProvider(create: (context) => createContextProvider()),
         ProxyProvider<SubsonicContextProvider, SubsonicContext>(
           update: (ctx, a, b) => a.context,
         ),
