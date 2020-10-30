@@ -13,7 +13,9 @@ class Repository {
     @required this.songs,
     @required this.servers,
     @required this.offlineCache,
-  });
+  })  : assert(songs != null),
+        assert(servers != null),
+        assert(offlineCache != null);
 }
 
 Repository createSqfliteRepository(Database db) {

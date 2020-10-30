@@ -87,6 +87,7 @@ class AppDb {
             FOREIGN KEY (songId, serverId)
             REFERENCES songs(id, serverId)
             ON DELETE SET NULL
+            ON UPDATE CASCADE
         )
       ''');
     },
@@ -100,11 +101,12 @@ class AppDb {
           CONSTRAINT fk_song
             FOREIGN KEY (songId, serverId)
             REFERENCES songs(id, serverId)
-            ON DELETE SET NULL,
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
           UNIQUE (songId, serverId)
         )
       ''');
-    }
+    },
   ];
 
   static Future upgrade(Database db, int from, int to) async {

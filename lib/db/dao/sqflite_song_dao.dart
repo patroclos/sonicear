@@ -93,7 +93,7 @@ class SqfliteSongDao {
     final batch = _db.batch();
     for (final song in data)
       batch.insert(TABLE_NAME, song,
-          conflictAlgorithm: ConflictAlgorithm.replace);
+          conflictAlgorithm: ConflictAlgorithm.ignore);
 
     await batch.commit(noResult: true);
   }
