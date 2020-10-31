@@ -102,38 +102,39 @@ class MainAppScreen extends StatefulWidget {
 class _MainAppScreenState extends State<MainAppScreen> {
   int _selectedNav = 0;
 
-  final areas = <Widget>[
+  Widget get _settingsRow => Row(
+    mainAxisSize: MainAxisSize.max,
+    mainAxisAlignment: MainAxisAlignment.end,
+    children: [
+      IconButton(
+        icon: Icon(Icons.settings),
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => SettingsScreen()),
+          );
+        },
+      ),
+    ],
+  );
+
+  List<Widget> get areas => <Widget>[
     // TODO: make this a widget
     Builder(builder: (context) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              IconButton(
-                icon: Icon(Icons.settings),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => SettingsScreen()),
-                  );
-                },
-              ),
-            ],
-          ),
-          Expanded(
+          _settingsRow,
+          SizedBox(
+            height: 200,
             child: Builder(builder: (context) {
               final repo = context.watch<Repository>();
               if(repo == null)
                 return CircularProgressIndicator();
               return OfflineGallery(repo.songs, repo.offlineCache);
             }),
-            flex: 3,
           ),
           Expanded(
-            flex: 8,
             child: Column(
               children: [
                 FlatButton(

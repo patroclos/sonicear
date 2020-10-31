@@ -48,41 +48,45 @@ class _OfflineGalleryState extends State<OfflineGallery> {
       scrollDirection: Axis.horizontal,
       pagingController: _pagingController,
       builderDelegate: PagedChildBuilderDelegate<DbSong>(
-          itemBuilder: (context, song, i) => InkWell(
-                onTap: () async {
-                  await playSong(song, context.read());
-                },
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SonicCover(song.coverId,
-                        size: 120, child: Text(song.title)),
-                    SizedBox(height: 12),
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            '${song.title}',
-                            style: Theme.of(context).textTheme.subtitle1,
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                            softWrap: false,
-                          ),
-                          if (song.artist != null)
+          itemBuilder: (context, song, i) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: InkWell(
+                  onTap: () async {
+                    await playSong(song, context.read());
+                  },
+                  child: SizedBox(
+                    width: 120,
+                    height: 140,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SonicCover(song.coverId,
+                            size: 120, child: Text(song.title)),
+                        SizedBox(height: 12),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
                             Text(
-                              '${song.artist.split(',')[0]}',
-                              style: Theme.of(context).textTheme.subtitle2,
+                              '${song.title}',
+                              style: Theme.of(context).textTheme.subtitle1,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              softWrap: false,
                             ),
-                        ],
-                      ),
+                            if (song.artist != null)
+                              Text(
+                                '${song.artist.split(',')[0]}',
+                                style: Theme.of(context).textTheme.subtitle2,
+                              ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              )),
+          )),
     );
   }
 }
