@@ -10,7 +10,6 @@ import 'package:sonicear/widgets/song_context_sheet.dart';
 import 'package:sonicear/widgets/sonic_song_tile.dart';
 
 class SonicSearch extends StatefulWidget {
-  // final Future<Iterable<DbSong>> Function(String query) searchSongs;
   final int batchSize;
 
   SonicSearch({this.batchSize = 20});
@@ -61,6 +60,7 @@ class _SonicSearchState extends State<SonicSearch> {
     super.dispose();
     _queryCtrl.dispose();
     _focus.dispose();
+    _pagingController.dispose();
   }
 
   Widget build(BuildContext context) {
@@ -70,32 +70,29 @@ class _SonicSearchState extends State<SonicSearch> {
     );
   }
 
-  Widget get _searchField => Padding(
-        padding: const EdgeInsets.only(bottom: 8, left: 8),
-        child: TextField(
-          controller: _queryCtrl,
-          focusNode: _focus,
-          keyboardType: TextInputType.text,
-          decoration: InputDecoration(
-            hintText: 'Search songs...',
-            border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.white30),
-            icon: Icon(Icons.search),
-            suffixIcon: IconButton(
-              icon: Icon(Icons.clear),
-              onPressed: () {
-                _queryCtrl.clear();
-                updateSearchQuery('');
-              },
-            ),
-            filled: true,
-            fillColor: Colors.white30,
-          ),
-          onChanged: (q) {
-            updateSearchQuery(q);
-          },
-        ),
-      );
+  Widget get _searchField => TextField(
+    controller: _queryCtrl,
+    focusNode: _focus,
+    keyboardType: TextInputType.text,
+    decoration: InputDecoration(
+      hintText: 'Search songs...',
+      border: InputBorder.none,
+      hintStyle: TextStyle(color: Colors.white30),
+      prefixIcon: Icon(Icons.search),
+      suffixIcon: IconButton(
+        icon: Icon(Icons.clear),
+        onPressed: () {
+          _queryCtrl.clear();
+          updateSearchQuery('');
+        },
+      ),
+      filled: true,
+      fillColor: Colors.white30,
+    ),
+    onChanged: (q) {
+      updateSearchQuery(q);
+    },
+  );
 
   Widget get _resultList => Expanded(
         child: Scrollbar(
