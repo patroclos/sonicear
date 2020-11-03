@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sonicear/db/dao/sqflite_song_dao.dart';
 import 'package:sonicear/db/repository.dart';
 import 'package:sonicear/subsonic/context.dart';
+import 'package:sonicear/subsonic/count_offset.dart';
 import 'package:sonicear/subsonic/requests/search3.dart';
 import 'extensions.dart';
 

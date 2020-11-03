@@ -1,30 +1,6 @@
 import 'package:meta/meta.dart';
 import 'package:sqflite/sqflite.dart';
 
-/*
-class DbOfflineSong {
-  final String songId;
-  final String fileLocation;
-  final String coverLocation;
-
-  DbOfflineSong({
-    @required this.songId,
-    @required this.fileLocation,
-    @required this.coverLocation,
-  })  : assert(songId != null),
-        assert(fileLocation != null),
-        assert(coverLocation != null);
-
-  factory DbOfflineSong.fromRaw(Map<String, dynamic> data) {
-    return DbOfflineSong(
-      songId: data['songId'],
-      fileLocation: data['fileLocation'],
-      coverLocation: data['coverLocation'],
-    );
-  }
-}
-*/
-
 class DbSong {
   final String id;
   final String serverId;
@@ -91,9 +67,32 @@ class SqfliteSongDao {
     final data = songs.map((song) => song.asMap);
 
     final batch = _db.batch();
-    for (final song in data)
-      batch.insert(TABLE_NAME, song,
-          conflictAlgorithm: ConflictAlgorithm.ignore);
+    for (final song in data) {
+      batch.rawInsert(
+        '''INSERT INTO $TABLE_NAME (id, serverId, title, artist, album, duration, suffix, track, coverId)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id, serverId) DO UPDATE SET
+              title=excluded.title,
+              artist=excluded.artist,
+              album=excluded.album,
+              duration=excluded.duration,
+              suffix=excluded.suffix,
+              track=excluded.track,
+              coverId=excluded.coverId''',
+        [
+          'id',
+          'serverId',
+          'title',
+          'artist',
+          'album',
+          'duration',
+          'suffix',
+          'track',
+          'coverId'
+        ].map((k) => song[k])
+        .toList(),
+      );
+    }
 
     await batch.commit(noResult: true);
   }

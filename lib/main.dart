@@ -120,69 +120,73 @@ class _MainAppScreenState extends State<MainAppScreen> {
   List<Widget> get areas => <Widget>[
     // TODO: make this a widget
     Builder(builder: (context) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          _settingsRow,
-          SizedBox(
-            height: 200,
-            child: Builder(builder: (context) {
-              final repo = context.watch<Repository>();
-              if(repo == null)
-                return CircularProgressIndicator();
-              return OfflineGallery(repo.songs, repo.offlineCache);
-            }),
-          ),
-          Expanded(
-            child: Column(
-              children: [
-                FlatButton(
-                  child: Text('Random Songs'),
-                  onPressed: () async {
-                    final ctx = context.read<SubsonicContext>();
-                    final songs =
-                        (await sub_req.GetRandomSongs(size: 30).run(ctx))
-                            .data
-                            .map((song) => song.toDbSong())
-                            .toList();
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            _settingsRow,
+            Text('Offline Songs', style: Theme.of(context).textTheme.headline5),
+            SizedBox(
+              height: 200,
+              child: Builder(builder: (context) {
+                final repo = context.watch<Repository>();
+                if(repo == null)
+                  return CircularProgressIndicator();
+                return OfflineGallery(repo.songs, repo.offlineCache);
+              }),
+            ),
+            Expanded(
+              child: Column(
+                children: [
+                  FlatButton(
+                    child: Text('Random Songs'),
+                    onPressed: () async {
+                      final ctx = context.read<SubsonicContext>();
+                      final songs =
+                          (await sub_req.GetRandomSongs(size: 30).run(ctx))
+                              .data
+                              .map((song) => song.toDbSong())
+                              .toList();
 
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => Scaffold(
-                          appBar: AppBar(
-                            title: Text('Random Songs'),
-                            actions: <Widget>[
-                              IconButton(
-                                icon: Icon(Icons.shuffle),
-                                onPressed: () {
-                                  AudioService.updateQueue(
-                                    songs
-                                        .map(OnlineMediaItemFromSong(ctx).call)
-                                        .toList(),
-                                  );
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => Scaffold(
+                            appBar: AppBar(
+                              title: Text('Random Songs'),
+                              actions: <Widget>[
+                                IconButton(
+                                  icon: Icon(Icons.shuffle),
+                                  onPressed: () {
+                                    AudioService.updateQueue(
+                                      songs
+                                          .map(OnlineMediaItemFromSong(ctx).call)
+                                          .toList(),
+                                    );
+                                  },
+                                )
+                              ],
+                            ),
+                            body: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: SonicSonglist(
+                                songs,
+                                onTap: (song) {
+                                  playSong(song, context.read());
                                 },
-                              )
-                            ],
-                          ),
-                          body: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: SonicSonglist(
-                              songs,
-                              onTap: (song) {
-                                playSong(song, context.read());
-                              },
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     }),
     Builder(

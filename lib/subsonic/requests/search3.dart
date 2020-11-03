@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/cupertino.dart';
+import '../count_offset.dart';
 import 'package:sonicear/subsonic/subsonic.dart';
 import 'package:http/http.dart' as http;
 
@@ -10,14 +10,6 @@ class Search3Result {
   Search3Result(this.songs);
 }
 
-class CountOffset {
-  final int count, offset;
-
-  const CountOffset({
-    @required this.count,
-    this.offset = 0,
-  });
-}
 
 class Search3 extends BaseRequest<Search3Result> {
   @override

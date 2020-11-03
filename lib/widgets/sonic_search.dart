@@ -4,7 +4,7 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:provider/provider.dart';
 import 'package:sonicear/audio/audio.dart';
 import 'package:sonicear/db/dao/sqflite_song_dao.dart';
-import 'package:sonicear/subsonic/requests/requests.dart';
+import 'package:sonicear/subsonic/count_offset.dart';
 import 'package:sonicear/usecases/search_music.dart';
 import 'package:sonicear/widgets/song_context_sheet.dart';
 import 'package:sonicear/widgets/sonic_song_tile.dart';
@@ -27,6 +27,10 @@ class _SonicSearchState extends State<SonicSearch> {
   String _query = '';
 
   final _pagingController = PagingController<int, DbSong>(firstPageKey: 0);
+  /*
+  final _artistController = PagingController<int, DbArtist>(firstPageKey: 0);
+  final _albumController = PagingController<int, DbAlbum>(firstPageKey: 0);
+   */
 
   @override
   void initState() {
@@ -66,7 +70,30 @@ class _SonicSearchState extends State<SonicSearch> {
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.max,
-      children: <Widget>[_searchField, if(context.watch<SearchMusic>() != null) _resultList],
+      children: <Widget>[
+        _searchField,
+        DefaultTabController(
+          length: 3,
+          child: Column(
+            children: [
+              TabBar(
+                tabs: [
+                  Tab(text: 'Artists', icon: Icon(Icons.person)),
+                  Tab(text: 'Albums', icon: Icon(Icons.album)),
+                  Tab(text: 'Songs', icon: Icon(Icons.music_note)),
+                ],
+              ),
+              /*
+              TabBarView(
+                children: [
+                ],
+              )
+               */
+            ],
+          ),
+        ),
+        if (context.watch<SearchMusic>() != null) _resultList,
+      ],
     );
   }
 
