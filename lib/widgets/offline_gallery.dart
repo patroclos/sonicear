@@ -25,6 +25,7 @@ class _OfflineGalleryState extends State<OfflineGallery> {
   @override
   void initState() {
     super.initState();
+    context.read<OfflineCache>().addListener(this._offlineCacheChanged);
     _pagingController.addPageRequestListener((pageKey) async {
       const pageSize = 10;
       final cacheSongs = await Future.wait(
@@ -40,6 +41,16 @@ class _OfflineGalleryState extends State<OfflineGallery> {
       else
         _pagingController.appendPage(cacheSongs, pageKey + pageSize);
     });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    context.read<OfflineCache>().removeListener(this._offlineCacheChanged);
+  }
+
+  void _offlineCacheChanged() {
+    this._pagingController.refresh();
   }
 
   @override
