@@ -7,6 +7,7 @@ import 'package:sonicear/subsonic/count_offset.dart';
 import 'package:sonicear/subsonic/requests/search3.dart';
 import 'extensions.dart';
 
+/// forwards to Search3, ensures DbEntities exist for results
 class SearchMusic {
   final SubsonicContext _subsonic;
   final Repository _repo;
@@ -36,6 +37,7 @@ class SearchMusic {
     final dbSongs = results.songs.map((song) => song.toDbSong()).toList();
 
     await _repo.songs.ensureSongsExist(dbSongs);
+    // _repo.artists.ensureArtistsExist()
 
     // TODO: also handle non-song search results in the future
     return dbSongs;

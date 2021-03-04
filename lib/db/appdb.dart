@@ -107,6 +107,63 @@ class AppDb {
         )
       ''');
     },
+    (txn) async {
+      await txn.execute('''
+        CREATE TABLE artists (
+          id CHARACTER(16) NOT NULL,
+          serverId CHARACTER(36) NOT NULL,
+          name TEXT NOT NULL,
+          coverId CHARACTER(16),
+          
+          PRIMARY KEY (id, serverId),
+          CONSTRAINT fk_serverId
+            FOREIGN KEY (serverId)
+            REFERENCES subsonic_servers(id)
+            ON DELETE CASCADE
+        )
+      ''');
+      await txn.execute('''
+        CREATE TABLE albums (
+          id CHARACTER(16) NOT NULL,
+          serverId CHARACTER(36) NOT NULL,
+          title TEXT NOT NULL,
+          artistId CHARACTER(16),
+          coverId CHARACTER(16),
+          
+          PRIMARY KEY (id, serverId),
+          CONSTRAINT fk_serverId
+            FOREIGN KEY (serverId)
+            REFERENCES subsonic_servers(id)
+            ON DELETE CASCADE,
+          CONSTRAINT fk_artistId
+            FOREIGN KEY (artistId, serverId)
+            REFERENCES artists(id, serverId)
+            ON DELETE SET NULL
+        )
+      ''');
+
+      await txn.execute('''
+        CREATE TABLE album_songs (
+          albumId CHARACTER(16) NOT NULL,
+          serverId CHARACTER(36) NOT NULL,
+          songId CHARACTER(16) NOT NULL,
+          
+          PRIMARY KEY (serverId, albumId, songId),
+          CONSTRAINT fk_serverId
+            FOREIGN KEY (serverId)
+            REFERENCES subsonic_servers(id)
+            ON DELETE CASCADE,
+          CONSTRAINT fk_albumId
+            FOREIGN KEY (albumId, serverId)
+            REFERENCES albums(id, serverId)
+            ON DELETE CASCADE,
+          CONSTRAINT fk_songId
+            FOREIGN KEY (songId, serverId)
+            REFERENCES songs(id, serverId)
+            ON DELETE CASCADE
+        )
+      ''');
+    }
   ];
 
   static Future upgrade(Database db, int from, int to) async {

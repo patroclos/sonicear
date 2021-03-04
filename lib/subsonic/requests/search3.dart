@@ -1,15 +1,17 @@
 import 'dart:convert';
 
+import 'package:sonicear/subsonic/models/artist.dart';
+
 import '../count_offset.dart';
 import 'package:sonicear/subsonic/subsonic.dart';
 import 'package:http/http.dart' as http;
 
 class Search3Result {
   final List<Song> songs;
+  final List<Artist> artists;
 
-  Search3Result(this.songs);
+  Search3Result({this.songs = const [], this.artists = const []});
 }
-
 
 class Search3 extends BaseRequest<Search3Result> {
   @override
@@ -58,8 +60,11 @@ class Search3 extends BaseRequest<Search3Result> {
       ResponseStatus.ok,
       ctx.version,
       Search3Result(
-        (data['searchResult3']['song'] as List ?? const [])
+        songs: (data['searchResult3']['song'] as List ?? const [])
             .map((song) => Song.parse(song, serverId: ctx.serverId))
+            .toList(),
+        artists: (data['searchResult3']['artist'] as List ?? const [])
+            .map((artist) => Artist.parse(artist))
             .toList(),
       ),
     );

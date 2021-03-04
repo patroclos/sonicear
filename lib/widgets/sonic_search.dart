@@ -123,6 +123,7 @@ class _SonicSearchState extends State<SonicSearch> {
 
   Widget get _resultList => Expanded(
         child: Scrollbar(
+          // TODO: switch this based on tab
           child: PagedListView<int, DbSong>(
               pagingController: _pagingController,
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,

@@ -4,6 +4,8 @@ import 'package:sonicear/subsonic/base_request.dart';
 import 'package:sonicear/subsonic/context.dart';
 import 'package:sonicear/subsonic/response.dart';
 
+import 'models/artist.dart';
+
 export 'token.dart';
 export 'response.dart';
 export 'base_request.dart';
@@ -46,20 +48,6 @@ class ArtistIndexEntry {
   }
 }
 
-class Artist {
-  final String id;
-  final String name;
-  final String coverArt;
-  final int albumCount;
-
-  Artist(this.id, this.name, this.coverArt, this.albumCount);
-
-  @override
-  String toString() {
-    return 'Artist{id: $id, name: $name, coverArt: $coverArt, albumCount: $albumCount}';
-  }
-}
-
 class GetArtistsRequest extends BaseRequest<GetArtistsData> {
   final String musicFolderId;
 
@@ -93,10 +81,10 @@ class GetArtistsRequest extends BaseRequest<GetArtistsData> {
           entry['name'],
           (entry['artist'] as List).map((artist) {
             return Artist(
-              artist['id'],
-              artist['name'],
-              artist['coverArt'],
-              artist['albumCount'],
+              id: artist['id'],
+              name: artist['name'],
+              coverArt: artist['coverArt'],
+              albumCount: artist['albumCount'],
             );
           }).toList(),
         );
